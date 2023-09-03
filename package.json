@@ -13,6 +13,7 @@
     "vite": "^4.4.5"
   },
   "dependencies": {
+    "@pixi/tilemap": "^4.0.0",
     "bitecs": "^0.3.40",
     "pixi.js": "^7.2.4"
   }

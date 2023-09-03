@@ -1,24 +1,37 @@
-import { defineQuery } from "bitecs";
+import { defineQuery, enterQuery, exitQuery } from "bitecs";
 import World from "../World";
-import Position from "../components/Position";
-import Rotation from "../components/Rotation";
-import Scale from "../components/Scale";
-import Velocity from "../components/Velocity";
 import sprites from "../resources/sprites";
+import SpriteComponent from "../components/Sprite";
+import { Sprite } from "pixi.js";
+import app from "../app";
 
-const movementQuery = defineQuery([Position, Rotation, Scale, Velocity]);
+const spriteQuery = defineQuery([SpriteComponent]);
 
 const spriteSystem = (world: World) => {
-  const ents = movementQuery(world);
+  const enteringSprites = enterQuery(spriteQuery)(world);
+  const exitingSprites = exitQuery(spriteQuery)(world);
+  for (let i = 0; i < enteringSprites.length; i++) {
+    console.log("enteringSprites", enteringSprites);
+    const eid = enteringSprites[i];
+    const sprite = new Sprite();
+    sprites.set(eid, sprite);
+    app.stage.addChild(sprite);
+  }
+  for (let i = 0; i < exitingSprites.length; i++) {
+    const eid = exitingSprites[i];
+    const sprite = sprites.get(eid);
+    if (sprite) {
+      sprite.destroy();
+      sprites.delete(eid);
+    }
+  }
+
+  const ents = spriteQuery(world);
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     const sprite = sprites.get(eid);
     if (sprite) {
-      sprite.x = Position.x[eid];
-      sprite.y = Position.y[eid];
-      sprite.rotation = Rotation.angle[eid];
-      sprite.scale.x = Scale.x[eid];
-      sprite.scale.y = Scale.y[eid];
+      sprite.anchor.set(SpriteComponent.anchor[eid]);
     }
   }
   return world;
