@@ -24,8 +24,8 @@ const spriteMovementSystem = (world: World) => {
       sprite.x = Position.x[eid];
       sprite.y = Position.y[eid];
       sprite.rotation = Rotation.angle[eid];
-      sprite.scale.x = Scale.x[eid];
-      sprite.scale.y = Scale.y[eid];
+      sprite.scaleX = Scale.x[eid];
+      sprite.scaleY = Scale.y[eid];
     }
   }
   return world;

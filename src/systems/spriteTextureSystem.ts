@@ -15,7 +15,7 @@ const spriteTextureSystem = (world: World) => {
     const sprite = sprites.get(eid);
     const texture = textures.get(eid);
     if (sprite && texture) {
-      sprite.texture = texture;
+      // sprite.texture = texture;
     }
   }
   return world;

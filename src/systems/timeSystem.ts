@@ -1,9 +1,9 @@
 import World from "../World";
-import app from "../app";
+import game from "../game";
 
 const timeSystem = (world: World) => {
   const { time } = world;
-  const delta = app.ticker.deltaTime;
+  const delta = game.getTime() - time.then;
   time.then = time.delta;
   time.delta = delta;
   time.elapsed += delta;

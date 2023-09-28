@@ -1,5 +1,5 @@
-import { Sprite } from "pixi.js";
+import { GameObjects } from "phaser";
 
-const sprites: Map<number, Sprite> = new Map();
+const sprites: Map<number, GameObjects.Sprite> = new Map();
 
 export default sprites;
