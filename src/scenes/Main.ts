@@ -21,6 +21,8 @@ import destinationSystem from "../systems/destinationSystem";
 import Destination from "../components/Destination";
 import mapMovementSystem from "../systems/mapMovementSystem";
 import Map from "../components/Map";
+import Collidable from "../components/Colllidable";
+import Pushable from "../components/Pushable";
 
 export default class Main extends Scene {
   world!: World;
@@ -84,6 +86,32 @@ export default class Main extends Scene {
         textures.set(eid, "sheet");
       }
     }
+
+    const tile = addEntity(world);
+    addComponent(world, Position, tile);
+    addComponent(world, Velocity, tile);
+    addComponent(world, Rotation, tile);
+    addComponent(world, Scale, tile);
+    addComponent(world, Sprite, tile);
+    addComponent(world, Texture, tile);
+    addComponent(world, Velocity, tile);
+    addComponent(world, Destination, tile);
+    addComponent(world, Collidable, tile);
+    addComponent(world, Pushable, tile);
+    Position.x[tile] = 4;
+    Position.y[tile] = 4;
+    Destination.x[tile] = 4;
+    Destination.y[tile] = 4;
+    Velocity.x[tile] = 0;
+    Velocity.y[tile] = 0;
+    Rotation.angle[tile] = 0;
+    Scale.x[tile] = 1;
+    Scale.y[tile] = 1;
+    Velocity.x[tile] = 1;
+    Velocity.y[tile] = 1;
+    Sprite.anchor[tile] = 0.5;
+    Texture.frame[tile] = 1;
+    textures.set(tile, "sheet");
 
     const eid = addEntity(world);
     addComponent(world, Position, eid);

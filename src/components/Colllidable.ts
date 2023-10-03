@@ -1,5 +1,5 @@
 import { defineComponent, Types } from "bitecs";
 
-const Tilemap = defineComponent();
+const Collidable = defineComponent();
 
-export default Tilemap;
+export default Collidable;
