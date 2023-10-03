@@ -15,14 +15,18 @@ const movementQuery = defineQuery([
   Velocity,
 ]);
 
-const spriteMovementSystem = (world: World) => {
+export const TILE_WIDTH = 16;
+export const TILE_HEIGHT = 16;
+
+const spriteRenderingSystem = (world: World) => {
   const ents = movementQuery(world);
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     const sprite = sprites.get(eid);
     if (sprite) {
-      sprite.x = Position.x[eid];
-      sprite.y = Position.y[eid];
+      sprite.x = Position.x[eid] * TILE_WIDTH;
+      sprite.y = Position.y[eid] * TILE_HEIGHT;
+      sprite.depth = Position.z[eid];
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
@@ -31,4 +35,4 @@ const spriteMovementSystem = (world: World) => {
   return world;
 };
 
-export default spriteMovementSystem;
+export default spriteRenderingSystem;

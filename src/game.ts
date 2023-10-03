@@ -2,8 +2,8 @@ import { Game, WEBGL } from "phaser";
 import Main from "./scenes/Main";
 
 const game = new Game({
-  width: 800,
-  height: 800,
+  width: 1024,
+  height: 1024,
   antialias: false,
   type: WEBGL,
   scene: Main,

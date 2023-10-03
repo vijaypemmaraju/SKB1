@@ -4,6 +4,7 @@ import sprites from "../resources/sprites";
 import SpriteComponent from "../components/Sprite";
 import game from "../game";
 import textures from "../resources/textures";
+import Texture from "../components/Texture";
 
 const spriteQuery = defineQuery([SpriteComponent]);
 
@@ -16,7 +17,12 @@ const spriteSystem = (world: World) => {
     if (!texture) {
       continue;
     }
-    const sprite = game.scene.scenes[0].add.sprite(0, 0, texture);
+    const sprite = game.scene.scenes[0].add.sprite(
+      0,
+      0,
+      texture,
+      Texture.frame[eid]
+    );
     sprites.set(eid, sprite);
   }
   for (let i = 0; i < exitingSprites.length; i++) {
