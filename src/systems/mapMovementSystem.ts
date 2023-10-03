@@ -70,6 +70,7 @@ const mapMovementSystem = (world: World) => {
         }
 
         resolveMapBoundaries(pid, map);
+        resolveCollisions(pid, collidables);
         if (
           Position.x[pid] !== Destination.x[pid] ||
           Position.y[pid] !== Destination.y[pid]
@@ -108,6 +109,19 @@ const resolveMapBoundaries = (eid: number, map: number) => {
   }
   if (Destination.y[eid] > Map.height[map] - 1) {
     Destination.y[eid] = Map.height[map] - 1;
+  }
+};
+
+const resolveCollisions = (eid: number, collidables: number[]) => {
+  for (let i = 0; i < collidables.length; i++) {
+    const cid = collidables[i];
+    if (
+      Position.x[cid] === Destination.x[eid] &&
+      Position.y[cid] === Destination.y[eid]
+    ) {
+      Destination.x[eid] = Math.floor(Position.x[eid]);
+      Destination.y[eid] = Math.floor(Position.y[eid]);
+    }
   }
 };
 

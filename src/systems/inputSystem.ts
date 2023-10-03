@@ -15,16 +15,16 @@ const inputSystem = (world: World) => {
     const eid = ents[i];
     let input = 0;
     if (up?.isDown) {
-      input |= 1;
+      input = 1;
     }
     if (game.scene.scenes[0].input.keyboard?.checkDown(down!)) {
-      input |= 2;
+      input = 2;
     }
     if (game.scene.scenes[0].input.keyboard?.checkDown(left!)) {
-      input |= 4;
+      input = 4;
     }
     if (game.scene.scenes[0].input.keyboard?.checkDown(right!)) {
-      input |= 8;
+      input = 8;
     }
     Input.lastDirection[eid] = Input.direction[eid];
     Input.direction[eid] = input;
