@@ -40,7 +40,7 @@ export default class Main extends Scene {
       movementSystem,
       spriteTextureSystem,
       goalSystem,
-      spriteRenderingSystem
+      spriteRenderingSystem,
     );
 
     this.world = createWorld<World>();
@@ -61,7 +61,7 @@ export default class Main extends Scene {
     this.cameras.main.setZoom(2);
     this.cameras.main.centerOn(
       Map.width[map] * TILE_WIDTH * 0.5,
-      Map.height[map] * TILE_WIDTH * 0.5
+      Map.height[map] * TILE_WIDTH * 0.5,
     );
 
     for (let i = 0; i < Map.width[map]; i++) {
@@ -71,7 +71,7 @@ export default class Main extends Scene {
           j,
           0,
           Phaser.Math.Between(0, 1) === 1 ? 0 : 5,
-          world
+          world,
         );
       }
     }

@@ -19,7 +19,7 @@ export const buildBaseEntity = (
   y: number,
   z: number,
   frame: number,
-  world: World
+  world: World,
 ): number => {
   const eid = addEntity(world);
   addComponent(world, Position, eid);
@@ -52,7 +52,7 @@ export const buildIcyTileEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 3, world);
   addComponent(world, Icy, eid);
@@ -63,7 +63,7 @@ export const buildGoalEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 6, world);
   addComponent(world, Goal, eid);
@@ -74,7 +74,7 @@ export const buildStaticBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 4, world);
   addComponent(world, Destination, eid);
@@ -86,7 +86,7 @@ export const buildPushableBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 2, world);
   addComponent(world, Destination, eid);
@@ -99,7 +99,7 @@ export const buildPlayerEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 1, world);
   addComponent(world, Collidable, eid);

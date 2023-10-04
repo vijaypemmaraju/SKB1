@@ -106,7 +106,7 @@ const mapMovementSystem = (world: World) => {
     while (isCollision) {
       isCollision = resolveCollisions(
         eid,
-        collidables.filter((c) => !pushed.includes(c))
+        collidables.filter((c) => !pushed.includes(c)),
       );
     }
   }
@@ -160,7 +160,7 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
 const resolveIcy = (
   eid: number,
   icys: number[],
-  collidables: number[]
+  collidables: number[],
 ): boolean => {
   let foundIcy = false;
   for (let j = 0; j < icys.length; j++) {

@@ -16,7 +16,7 @@ const goalSystem = (world: World) => {
       goals.some(
         (gid) =>
           Position.x[gid] === Position.x[pid] &&
-          Position.y[gid] === Position.y[pid]
+          Position.y[gid] === Position.y[pid],
       )
     ) {
       removeComponent(world, Pushable, pid);
