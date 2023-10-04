@@ -23,6 +23,7 @@ import mapMovementSystem from "../systems/mapMovementSystem";
 import Map from "../components/Map";
 import Collidable from "../components/Colllidable";
 import Pushable from "../components/Pushable";
+import Icy from "../components/Icy";
 
 export default class Main extends Scene {
   world!: World;
@@ -59,7 +60,7 @@ export default class Main extends Scene {
     Map.width[map] = 16;
     Map.height[map] = 16;
 
-    this.cameras.main.setZoom(4);
+    this.cameras.main.setZoom(2);
     this.cameras.main.centerOn(
       Map.width[map] * TILE_WIDTH * 0.5,
       Map.height[map] * TILE_WIDTH * 0.5
@@ -74,6 +75,12 @@ export default class Main extends Scene {
         addComponent(world, Scale, eid);
         addComponent(world, Sprite, eid);
         addComponent(world, Texture, eid);
+        if ((i === 6 || i === 7) && (j === 6 || j === 7)) {
+          addComponent(world, Icy, eid);
+          Texture.frame[eid] = 3;
+        } else {
+          Texture.frame[eid] = 0;
+        }
         Position.x[eid] = i;
         Position.y[eid] = j;
         Velocity.x[eid] = 0;
@@ -82,7 +89,7 @@ export default class Main extends Scene {
         Scale.x[eid] = 1;
         Scale.y[eid] = 1;
         Sprite.anchor[eid] = 0.5;
-        Texture.frame[eid] = 0;
+
         textures.set(eid, "sheet");
       }
     }
@@ -123,6 +130,7 @@ export default class Main extends Scene {
     addComponent(world, Sprite, eid);
     addComponent(world, Texture, eid);
     addComponent(world, Velocity, eid);
+    addComponent(world, Collidable, eid);
     addComponent(world, Input, eid);
     addComponent(world, Destination, eid);
     Position.x[eid] = 0;

@@ -1,22 +1,25 @@
 import { defineQuery } from "bitecs";
 import World from "../World";
-import game from "../game";
 import Input, { Direction } from "../components/Input";
 import Destination from "../components/Destination";
 import Map from "../components/Map";
 import Collidable from "../components/Colllidable";
 import Position from "../components/Position";
 import Pushable from "../components/Pushable";
+import Icy from "../components/Icy";
 
 const inputQuery = defineQuery([Destination, Input]);
 const collidableQuery = defineQuery([Collidable, Position]);
 const pushableQuery = defineQuery([Pushable, Position]);
 const mapQuery = defineQuery([Map]);
+const icyQuery = defineQuery([Position, Icy]);
+
 const mapMovementSystem = (world: World) => {
   const inputs = inputQuery(world);
   const map = mapQuery(world)[0];
   const collidables = collidableQuery(world);
   const pushables = pushableQuery(world);
+  const icies = icyQuery(world);
   for (let i = 0; i < inputs.length; i++) {
     const eid = inputs[i];
     let input = Input.direction[eid];
@@ -42,13 +45,11 @@ const mapMovementSystem = (world: World) => {
       isInput = true;
     }
 
-    resolveMapBoundaries(eid, map);
-
     if (!isInput) {
       continue;
     }
 
-    const pushed = [];
+    const pushed: number[] = [];
 
     for (let j = 0; j < pushables.length; j++) {
       const pid = pushables[j];
@@ -69,8 +70,19 @@ const mapMovementSystem = (world: World) => {
           Destination.x[pid] += 1;
         }
 
+        if (resolveCollisions(pid, collidables)) {
+          continue;
+        }
+
+        let isIcy = true;
+        while (isIcy) {
+          isIcy = resolveIcy(pid, icies);
+          if (isIcy && resolveCollisions(pid, collidables)) {
+            break;
+          }
+        }
         resolveMapBoundaries(pid, map);
-        resolveCollisions(pid, collidables);
+
         if (
           Position.x[pid] !== Destination.x[pid] ||
           Position.y[pid] !== Destination.y[pid]
@@ -80,18 +92,25 @@ const mapMovementSystem = (world: World) => {
       }
     }
 
-    for (let j = 0; j < collidables.length; j++) {
-      const cid = collidables[j];
-      if (pushed.includes(cid)) {
-        continue;
+    let isIcy = true;
+    let foundIce = false;
+    while (isIcy) {
+      isIcy = resolveIcy(eid, icies);
+      if (isIcy) {
+        foundIce = true;
       }
-      if (
-        Position.x[cid] === Destination.x[eid] &&
-        Position.y[cid] === Destination.y[eid]
-      ) {
-        Destination.x[eid] = Math.floor(Position.x[eid]);
-        Destination.y[eid] = Math.floor(Position.y[eid]);
+      if (isIcy && resolveCollisions(eid, collidables)) {
+        break;
       }
+    }
+    resolveMapBoundaries(eid, map);
+
+    let isCollision = true;
+    while (isCollision) {
+      isCollision = resolveCollisions(
+        eid,
+        collidables.filter((c) => !pushed.includes(c))
+      );
     }
   }
   return world;
@@ -112,17 +131,62 @@ const resolveMapBoundaries = (eid: number, map: number) => {
   }
 };
 
-const resolveCollisions = (eid: number, collidables: number[]) => {
+const resolveCollisions = (eid: number, collidables: number[]): boolean => {
+  let foundCollision = false;
   for (let i = 0; i < collidables.length; i++) {
     const cid = collidables[i];
+    if (cid === eid) {
+      continue;
+    }
     if (
-      Position.x[cid] === Destination.x[eid] &&
-      Position.y[cid] === Destination.y[eid]
+      Destination.x[cid] === Destination.x[eid] &&
+      Destination.y[cid] === Destination.y[eid]
     ) {
-      Destination.x[eid] = Math.floor(Position.x[eid]);
-      Destination.y[eid] = Math.floor(Position.y[eid]);
+      foundCollision = true;
+      if (Position.x[eid] < Destination.x[eid]) {
+        Destination.x[eid] -= 1;
+      }
+      if (Position.x[eid] > Destination.x[eid]) {
+        Destination.x[eid] += 1;
+      }
+      if (Position.y[eid] < Destination.y[eid]) {
+        Destination.y[eid] -= 1;
+      }
+      if (Position.y[eid] > Destination.y[eid]) {
+        Destination.y[eid] += 1;
+      }
     }
   }
+  return foundCollision;
+};
+
+const resolveIcy = (eid: number, icys: number[]): boolean => {
+  let foundIcy = false;
+  for (let j = 0; j < icys.length; j++) {
+    const iid = icys[j];
+    if (iid === eid) {
+      continue;
+    }
+    if (
+      Position.x[iid] === Destination.x[eid] &&
+      Position.y[iid] === Destination.y[eid]
+    ) {
+      foundIcy = true;
+      if (Position.x[eid] < Destination.x[eid]) {
+        Destination.x[eid] += 1;
+      }
+      if (Position.x[eid] > Destination.x[eid]) {
+        Destination.x[eid] -= 1;
+      }
+      if (Position.y[eid] < Destination.y[eid]) {
+        Destination.y[eid] += 1;
+      }
+      if (Position.y[eid] > Destination.y[eid]) {
+        Destination.y[eid] -= 1;
+      }
+    }
+  }
+  return foundIcy;
 };
 
 export default mapMovementSystem;
