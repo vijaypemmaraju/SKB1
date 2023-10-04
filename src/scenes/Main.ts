@@ -96,5 +96,9 @@ export default class Main extends Scene {
   update() {
     // Update game objects here
     this.pipeline(this.world);
+
+    if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
+      this.scene.restart();
+    }
   }
 }
