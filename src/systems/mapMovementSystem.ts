@@ -76,10 +76,7 @@ const mapMovementSystem = (world: World) => {
 
         let isIcy = true;
         while (isIcy) {
-          isIcy = resolveIcy(pid, icies);
-          if (isIcy && resolveCollisions(pid, collidables)) {
-            break;
-          }
+          isIcy = resolveIcy(pid, icies, collidables);
         }
         resolveMapBoundaries(pid, map);
 
@@ -92,13 +89,13 @@ const mapMovementSystem = (world: World) => {
       }
     }
 
+    if (resolveCollisions(eid, collidables)) {
+      continue;
+    }
+
     let isIcy = true;
-    let foundIce = false;
     while (isIcy) {
-      isIcy = resolveIcy(eid, icies);
-      if (isIcy) {
-        foundIce = true;
-      }
+      isIcy = resolveIcy(eid, icies, collidables);
       if (isIcy && resolveCollisions(eid, collidables)) {
         break;
       }
@@ -160,7 +157,11 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
   return foundCollision;
 };
 
-const resolveIcy = (eid: number, icys: number[]): boolean => {
+const resolveIcy = (
+  eid: number,
+  icys: number[],
+  collidables: number[]
+): boolean => {
   let foundIcy = false;
   for (let j = 0; j < icys.length; j++) {
     const iid = icys[j];
@@ -171,22 +172,47 @@ const resolveIcy = (eid: number, icys: number[]): boolean => {
       Position.x[iid] === Destination.x[eid] &&
       Position.y[iid] === Destination.y[eid]
     ) {
-      foundIcy = true;
-      if (Position.x[eid] < Destination.x[eid]) {
+      if (
+        Position.x[eid] < Destination.x[eid] &&
+        !wouldCollide(Destination.x[eid] + 1, Destination.y[eid], collidables)
+      ) {
+        foundIcy = true;
         Destination.x[eid] += 1;
       }
-      if (Position.x[eid] > Destination.x[eid]) {
+      if (
+        Position.x[eid] > Destination.x[eid] &&
+        !wouldCollide(Destination.x[eid] - 1, Destination.y[eid], collidables)
+      ) {
+        foundIcy = true;
         Destination.x[eid] -= 1;
       }
-      if (Position.y[eid] < Destination.y[eid]) {
+      if (
+        Position.y[eid] < Destination.y[eid] &&
+        !wouldCollide(Destination.x[eid], Destination.y[eid] + 1, collidables)
+      ) {
+        foundIcy = true;
         Destination.y[eid] += 1;
       }
-      if (Position.y[eid] > Destination.y[eid]) {
+      if (
+        Position.y[eid] > Destination.y[eid] &&
+        !wouldCollide(Destination.x[eid], Destination.y[eid] - 1, collidables)
+      ) {
+        foundIcy = true;
         Destination.y[eid] -= 1;
       }
     }
   }
   return foundIcy;
+};
+
+const wouldCollide = (x: number, y: number, collidables: number[]): boolean => {
+  for (let i = 0; i < collidables.length; i++) {
+    const cid = collidables[i];
+    if (Position.x[cid] === x && Position.y[cid] === y) {
+      return true;
+    }
+  }
+  return false;
 };
 
 export default mapMovementSystem;
