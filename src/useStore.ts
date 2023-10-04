@@ -4,7 +4,7 @@ type Store = {
   hasWon: boolean;
 };
 
-const useStore = create<Store>((set) => ({
+const useStore = create<Store>(() => ({
   hasWon: false,
 }));
 
