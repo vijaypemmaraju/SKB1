@@ -40,7 +40,7 @@ export default class Main extends Scene {
       movementSystem,
       spriteTextureSystem,
       goalSystem,
-      spriteRenderingSystem,
+      spriteRenderingSystem
     );
 
     this.world = createWorld<World>();
@@ -61,7 +61,7 @@ export default class Main extends Scene {
     this.cameras.main.setZoom(2);
     this.cameras.main.centerOn(
       Map.width[map] * TILE_WIDTH * 0.5,
-      Map.height[map] * TILE_WIDTH * 0.5,
+      Map.height[map] * TILE_WIDTH * 0.5
     );
 
     for (let i = 0; i < Map.width[map]; i++) {
@@ -71,7 +71,7 @@ export default class Main extends Scene {
           j,
           0,
           Phaser.Math.Between(0, 1) === 1 ? 0 : 5,
-          world,
+          world
         );
       }
     }
@@ -82,6 +82,41 @@ export default class Main extends Scene {
     buildIcyTileEntity(3, 4, 1, world);
     buildIcyTileEntity(3, 5, 1, world);
     buildIcyTileEntity(3, 6, 1, world);
+    buildIcyTileEntity(4, 5, 1, world);
+    buildIcyTileEntity(5, 6, 1, world);
+    buildIcyTileEntity(5, 4, 1, world);
+    buildIcyTileEntity(5, 3, 1, world);
+    buildIcyTileEntity(8, 2, 1, world);
+    buildIcyTileEntity(8, 3, 1, world);
+    buildIcyTileEntity(8, 4, 1, world);
+    buildIcyTileEntity(9, 4, 1, world);
+    buildIcyTileEntity(9, 5, 1, world);
+    buildIcyTileEntity(9, 6, 1, world);
+    buildIcyTileEntity(10, 5, 1, world);
+    buildIcyTileEntity(11, 6, 1, world);
+    buildIcyTileEntity(11, 4, 1, world);
+    buildIcyTileEntity(11, 3, 1, world);
+
+    buildIcyTileEntity(2, 7, 1, world);
+    buildIcyTileEntity(2, 8, 1, world);
+    buildIcyTileEntity(2, 9, 1, world);
+    buildIcyTileEntity(3, 0, 1, world);
+    buildIcyTileEntity(3, 10, 1, world);
+    buildIcyTileEntity(3, 11, 1, world);
+    buildIcyTileEntity(4, 7, 1, world);
+    buildIcyTileEntity(5, 8, 1, world);
+    buildIcyTileEntity(5, 6, 1, world);
+    buildIcyTileEntity(5, 5, 1, world);
+    buildIcyTileEntity(8, 5, 1, world);
+    buildIcyTileEntity(8, 9, 1, world);
+    buildIcyTileEntity(8, 10, 1, world);
+    buildIcyTileEntity(9, 11, 1, world);
+    buildIcyTileEntity(9, 12, 1, world);
+    buildIcyTileEntity(9, 11, 1, world);
+    buildIcyTileEntity(10, 10, 1, world);
+    buildIcyTileEntity(11, 10, 1, world);
+    buildIcyTileEntity(11, 7, 1, world);
+    buildIcyTileEntity(11, 9, 1, world);
 
     buildStaticBlockEntity(4, 2, 1, world);
     buildStaticBlockEntity(4, 3, 1, world);

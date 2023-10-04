@@ -6,20 +6,22 @@ import Scale from "../components/Scale";
 import Velocity from "../components/Velocity";
 import sprites from "../resources/sprites";
 import Sprite from "../components/Sprite";
+import Texture from "../components/Texture";
 
-const movementQuery = defineQuery([
+const spriteQuery = defineQuery([
   Sprite,
   Position,
   Rotation,
   Scale,
   Velocity,
+  Texture,
 ]);
 
 export const TILE_WIDTH = 16;
 export const TILE_HEIGHT = 16;
 
 const spriteRenderingSystem = (world: World) => {
-  const ents = movementQuery(world);
+  const ents = spriteQuery(world);
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     const sprite = sprites.get(eid);
@@ -30,6 +32,7 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
+      sprite.setFrame(Texture.frame[eid]);
     }
   }
   return world;
