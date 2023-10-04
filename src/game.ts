@@ -1,9 +1,10 @@
 import { Game, WEBGL } from "phaser";
 import Main from "./scenes/Main";
 
+const width = Math.min(512, window.innerWidth);
 const game = new Game({
-  width: 512,
-  height: 512,
+  width,
+  height: Math.min(512, width),
   antialias: false,
   type: WEBGL,
   scene: Main,

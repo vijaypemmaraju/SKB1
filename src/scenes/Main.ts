@@ -21,6 +21,7 @@ import {
   buildGoalEntity,
 } from "../builders";
 import goalSystem from "../systems/goalSystem";
+import useStore from "../useStore";
 
 export default class Main extends Scene {
   world!: World;
@@ -31,6 +32,12 @@ export default class Main extends Scene {
   }
 
   preload() {
+    this.load.scenePlugin(
+      "rexgesturesplugin",
+      "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexgesturesplugin.min.js",
+      "rexGestures",
+      "rexGestures"
+    );
     this.pipeline = pipe(
       timeSystem,
       spriteSystem,
@@ -50,6 +57,16 @@ export default class Main extends Scene {
   }
 
   create() {
+    const swipe = (this as any).rexGestures.add.swipe({
+      enable: true,
+      bounds: undefined,
+
+      threshold: 10,
+      velocityThreshold: 1000,
+      dir: "4dir",
+    });
+
+    useStore.setState({ swipe });
     const world = this.world;
     addEntity(world);
 
@@ -58,7 +75,14 @@ export default class Main extends Scene {
     Map.width[map] = 16;
     Map.height[map] = 16;
 
-    this.cameras.main.setZoom(2);
+    if (this.game.device.os.android || this.game.device.os.iOS) {
+      const width = window.innerWidth;
+      const ratio = width / ((Map.width[map] - 2) * TILE_WIDTH);
+      this.cameras.main.setZoom(ratio);
+    } else {
+      this.cameras.main.setZoom(2);
+    }
+
     this.cameras.main.centerOn(
       Map.width[map] * TILE_WIDTH * 0.5,
       Map.height[map] * TILE_WIDTH * 0.5
