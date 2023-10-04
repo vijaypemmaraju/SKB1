@@ -8,28 +8,19 @@ import spriteSystem from "../systems/spriteSystem";
 import movementSystem from "../systems/movementSystem";
 import World from "../World";
 import spriteTextureSystem from "../systems/spriteTextureSystem";
-import Position from "../components/Position";
-import Rotation from "../components/Rotation";
-import Sprite from "../components/Sprite";
-import Texture from "../components/Texture";
-import Velocity from "../components/Velocity";
-import textures from "../resources/textures";
-import Scale from "../components/Scale";
 import inputSystem from "../systems/inputSystem";
-import Input from "../components/Input";
 import destinationSystem from "../systems/destinationSystem";
-import Destination from "../components/Destination";
 import mapMovementSystem from "../systems/mapMovementSystem";
 import Map from "../components/Map";
-import Collidable from "../components/Colllidable";
-import Pushable from "../components/Pushable";
-import Icy from "../components/Icy";
 import {
   buildIcyTileEntity,
   buildBaseEntity,
   buildPushableBlockEntity,
   buildPlayerEntity,
+  buildStaticBlockEntity,
+  buildGoalEntity,
 } from "../builders";
+import goalSystem from "../systems/goalSystem";
 
 export default class Main extends Scene {
   world!: World;
@@ -48,6 +39,7 @@ export default class Main extends Scene {
       mapMovementSystem,
       movementSystem,
       spriteTextureSystem,
+      goalSystem,
       spriteRenderingSystem
     );
 
@@ -74,23 +66,39 @@ export default class Main extends Scene {
 
     for (let i = 0; i < Map.width[map]; i++) {
       for (let j = 0; j < Map.height[map]; j++) {
-        buildBaseEntity(i, j, 0, world);
+        buildBaseEntity(
+          i,
+          j,
+          0,
+          Phaser.Math.Between(0, 1) === 1 ? 0 : 5,
+          world
+        );
       }
     }
 
-    for (let i = 0; i < Map.width[map]; i++) {
-      for (let j = 0; j < Map.height[map]; j++) {
-        if ((i === 6 || i === 7) && (j === 6 || j === 7)) {
-          buildIcyTileEntity(i, j, 3, world);
-        }
-      }
-    }
+    buildIcyTileEntity(2, 2, 1, world);
+    buildIcyTileEntity(2, 3, 1, world);
+    buildIcyTileEntity(2, 4, 1, world);
+    buildIcyTileEntity(3, 4, 1, world);
+    buildIcyTileEntity(3, 5, 1, world);
+    buildIcyTileEntity(3, 6, 1, world);
+
+    buildStaticBlockEntity(4, 2, 1, world);
+    buildStaticBlockEntity(4, 3, 1, world);
+    buildStaticBlockEntity(2, 3, 1, world);
+    buildStaticBlockEntity(7, 4, 1, world);
+    buildStaticBlockEntity(5, 5, 1, world);
+    buildStaticBlockEntity(1, 6, 1, world);
 
     for (let i = 0; i < 3; i++) {
-      buildPushableBlockEntity(4 + i * 2, 4, 2, world);
+      buildPushableBlockEntity(4 + i * 2, 4, 1, world);
     }
 
-    buildPlayerEntity(4, 6, 1, world);
+    buildGoalEntity(7, 7, 0, world);
+    buildGoalEntity(7, 9, 0, world);
+    buildGoalEntity(7, 5, 0, world);
+
+    buildPlayerEntity(4, 6, 3, world);
   }
 
   update() {

@@ -12,10 +12,12 @@ import textures from "./resources/textures";
 import Scale from "./components/Scale";
 import Icy from "./components/Icy";
 import Input from "./components/Input";
+import Goal from "./components/Goal";
 
 export const buildBaseEntity = (
   x: number,
   y: number,
+  z: number,
   frame: number,
   world: World
 ): number => {
@@ -29,6 +31,7 @@ export const buildBaseEntity = (
   addComponent(world, Velocity, eid);
   Position.x[eid] = x;
   Position.y[eid] = y;
+  Position.z[eid] = z;
   Destination.x[eid] = x;
   Destination.y[eid] = y;
   Velocity.x[eid] = 0;
@@ -48,21 +51,44 @@ export const buildBaseEntity = (
 export const buildIcyTileEntity = (
   x: number,
   y: number,
-  frame: number,
+  z: number,
   world: World
 ): number => {
-  const eid = buildBaseEntity(x, y, frame, world);
+  const eid = buildBaseEntity(x, y, z, 3, world);
   addComponent(world, Icy, eid);
+  return eid;
+};
+
+export const buildGoalEntity = (
+  x: number,
+  y: number,
+  z: number,
+  world: World
+): number => {
+  const eid = buildBaseEntity(x, y, z, 6, world);
+  addComponent(world, Goal, eid);
+  return eid;
+};
+
+export const buildStaticBlockEntity = (
+  x: number,
+  y: number,
+  z: number,
+  world: World
+): number => {
+  const eid = buildBaseEntity(x, y, z, 4, world);
+  addComponent(world, Destination, eid);
+  addComponent(world, Collidable, eid);
   return eid;
 };
 
 export const buildPushableBlockEntity = (
   x: number,
   y: number,
-  frame: number,
+  z: number,
   world: World
 ): number => {
-  const eid = buildBaseEntity(x, y, frame, world);
+  const eid = buildBaseEntity(x, y, z, 2, world);
   addComponent(world, Destination, eid);
   addComponent(world, Collidable, eid);
   addComponent(world, Pushable, eid);
@@ -72,10 +98,10 @@ export const buildPushableBlockEntity = (
 export const buildPlayerEntity = (
   x: number,
   y: number,
-  frame: number,
+  z: number,
   world: World
 ): number => {
-  const eid = buildBaseEntity(x, y, frame, world);
+  const eid = buildBaseEntity(x, y, z, 1, world);
   addComponent(world, Collidable, eid);
   addComponent(world, Destination, eid);
   addComponent(world, Input, eid);
