@@ -13,8 +13,7 @@ describe("movementSystem", () => {
     const eid = buildBaseEntity(0, 0, 0, 0, world);
     Velocity.x[eid] = 1;
     Velocity.y[eid] = 1;
-    const updatedWorld = movementSystem(world);
-    getAllEntities(world);
+    movementSystem(world);
     expect(Position.x[0]).toBe(1);
     expect(Position.y[0]).toBe(1);
     expect(Position.z[0]).toBe(0);
