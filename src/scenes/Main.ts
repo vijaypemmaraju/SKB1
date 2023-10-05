@@ -7,7 +7,6 @@ import spriteRenderingSystem, {
 import spriteSystem from "../systems/spriteSystem";
 import movementSystem from "../systems/movementSystem";
 import World from "../World";
-import spriteTextureSystem from "../systems/spriteTextureSystem";
 import inputSystem from "../systems/inputSystem";
 import destinationSystem from "../systems/destinationSystem";
 import mapMovementSystem from "../systems/mapMovementSystem";
@@ -45,7 +44,6 @@ export default class Main extends Scene {
       destinationSystem,
       mapMovementSystem,
       movementSystem,
-      spriteTextureSystem,
       goalSystem,
       spriteRenderingSystem
     );

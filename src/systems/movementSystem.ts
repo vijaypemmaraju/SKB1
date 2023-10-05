@@ -5,7 +5,7 @@ import Rotation from "../components/Rotation";
 import Scale from "../components/Scale";
 import Velocity from "../components/Velocity";
 
-const movementQuery = defineQuery([Position, Rotation, Scale, Velocity]);
+const movementQuery = defineQuery([Position, Velocity]);
 
 const movementSystem = (world: World) => {
   const {
