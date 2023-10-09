@@ -105,16 +105,42 @@ export default class Main extends Scene {
       Map.height[map] * TILE_WIDTH * 0.5
     );
 
-    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.1);
+    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.01);
     this.tweens.add({
       targets: vignette,
-      radius: 1,
+      radius: 0.4,
       duration: 1000,
     });
 
-    this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.4);
-    this.cameras.main.postFX.addBarrel(1.1);
-    this.cameras.main.postFX.addTiltShift(0.1);
+    const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
+    const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.1);
+    const barrel = this.cameras.main.postFX.addBarrel(1.15);
+    const tiltShift = this.cameras.main.postFX.addTiltShift(0.5);
+
+    useStore.subscribe(() => {
+      if (useStore.getState().hasWon) {
+        this.tweens.add({
+          targets: colorMatrix,
+          alpha: 0,
+          duration: 1000,
+        });
+        this.tweens.add({
+          targets: vignette,
+          radius: 1,
+          duration: 1000,
+        });
+        this.tweens.add({
+          targets: barrel,
+          amount: 1.04,
+          duration: 1000,
+        });
+        this.tweens.add({
+          targets: tiltShift,
+          radius: 0.1,
+          duration: 1000,
+        });
+      }
+    });
 
     const midWidth = Map.width[map] / 2;
     const midHeight = Map.height[map] / 2;
@@ -313,15 +339,15 @@ export default class Main extends Scene {
       const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
       const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
       this.cameras.main.scrollX +=
-        (destinationX - this.cameras.main.scrollX) * 0.000001 * delta;
+        (destinationX - this.cameras.main.scrollX) * 0.00001 * delta;
       this.cameras.main.scrollY +=
-        (destinationY - this.cameras.main.scrollY) * 0.000001 * delta;
+        (destinationY - this.cameras.main.scrollY) * 0.00001 * delta;
       if (
         Math.abs(destinationX - this.cameras.main.scrollX) < 1 &&
         Math.abs(destinationY - this.cameras.main.scrollY) < 1
       ) {
         this.isFollowing = true;
-        this.cameras.main.startFollow(playerSprite);
+        this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
       }
     }
   }
