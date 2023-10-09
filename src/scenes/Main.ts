@@ -24,12 +24,14 @@ import useStore from "../useStore";
 import sprites from "../resources/sprites";
 import Position from "../components/Position";
 import Destination from "../components/Destination";
+import animations from "../resources/animations";
+import Sprite from "../components/Sprite";
 
 export default class Main extends Scene {
   world!: World;
   pipeline!: (world: World) => void;
   player!: number;
-  isFollowing: boolean;
+  isFollowing!: boolean;
 
   constructor() {
     super({ key: "Main" });
@@ -58,12 +60,14 @@ export default class Main extends Scene {
 
     this.load.atlas("sheet", "sheet.png", "sheet.json");
     this.load.aseprite("bunny", "bunny.png", "bunny.json");
+    this.load.aseprite("grass", "grass.png", "grass.json");
   }
 
   create() {
     const graphics = this.add.graphics();
 
     this.anims.createFromAseprite("bunny");
+    this.anims.createFromAseprite("grass");
 
     graphics.lineStyle(4, 0x00ff00, 1);
     graphics.beginPath();
@@ -114,13 +118,13 @@ export default class Main extends Scene {
 
     for (let i = 0; i < Map.width[map]; i++) {
       for (let j = 0; j < Map.height[map]; j++) {
-        buildBaseEntity(
-          i,
-          j,
-          0,
-          Phaser.Math.Between(0, 1) === 1 ? 0 : 5,
-          world
-        );
+        const eid = buildBaseEntity(i, j, 0, 0, world, "grass");
+        Sprite.animated[eid] = 1;
+        animations.set(eid, {
+          key: "Grass" + Phaser.Math.Between(1, 4),
+          repeat: -1,
+          frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+        });
       }
     }
 

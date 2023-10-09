@@ -7,6 +7,7 @@ import Velocity from "../components/Velocity";
 import sprites from "../resources/sprites";
 import Sprite from "../components/Sprite";
 import Texture from "../components/Texture";
+import animations from "../resources/animations";
 
 const spriteQuery = defineQuery([
   Sprite,
@@ -32,7 +33,16 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
-      if (!Sprite.animated[eid]) {
+      if (Sprite.animated[eid]) {
+        const animation = animations.get(eid);
+        if (
+          animation &&
+          sprite.anims.currentAnim?.key !==
+            (animation as Phaser.Types.Animations.PlayAnimationConfig).key
+        ) {
+          sprite.play(animation);
+        }
+      } else {
         sprite.setFrame(Texture.frame[eid]);
       }
     }

@@ -9,6 +9,7 @@ import Pushable from "../components/Pushable";
 import Icy from "../components/Icy";
 import Sprite from "../components/Sprite";
 import sprites from "../resources/sprites";
+import animations from "../resources/animations";
 
 const inputQuery = defineQuery([Destination, Input, Sprite]);
 const collidableQuery = defineQuery([Collidable, Position]);
@@ -51,14 +52,14 @@ const mapMovementSystem = (world: World) => {
 
     if (Input.direction[eid] != Direction.None) {
       if (sprite?.anims.currentAnim?.key !== "Walk") {
-        sprite?.play({
+        animations.set(eid, {
           key: "Walk",
           repeat: -1,
         });
       }
     } else {
       if (sprite?.anims.currentAnim?.key !== "Idle") {
-        sprite?.play({
+        animations.set(eid, {
           key: "Idle",
           repeat: -1,
         });
