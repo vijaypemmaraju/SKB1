@@ -9,6 +9,11 @@ const game = new Game({
   type: AUTO,
   scene: Main,
   pixelArt: true,
+  fps: {
+    min: 5,
+    target: 60,
+    forceSetTimeOut: true,
+  },
 });
 
 export default game;

@@ -89,8 +89,8 @@ export default class Main extends Scene {
 
     const map = addEntity(world);
     addComponent(world, Map, map);
-    Map.width[map] = 8;
-    Map.height[map] = 8;
+    Map.width[map] = 80;
+    Map.height[map] = 80;
 
     if (this.game.device.os.android || this.game.device.os.iOS) {
       const width = window.innerWidth;
@@ -116,15 +116,26 @@ export default class Main extends Scene {
     this.cameras.main.postFX.addBarrel(1.1);
     this.cameras.main.postFX.addTiltShift(0.1);
 
-    for (let i = 0; i < Map.width[map]; i++) {
-      for (let j = 0; j < Map.height[map]; j++) {
-        const eid = buildBaseEntity(i, j, 0, 0, world, "grass");
-        Sprite.animated[eid] = 1;
-        animations.set(eid, {
-          key: "Grass" + Phaser.Math.Between(1, 4),
-          repeat: -1,
-          frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
-        });
+    const midWidth = Map.width[map] / 2;
+    const midHeight = Map.height[map] / 2;
+    const initialRoomSize = 8;
+    for (
+      let i = midWidth - initialRoomSize / 2;
+      i < midWidth + initialRoomSize / 2;
+      i++
+    ) {
+      for (
+        let j = midHeight - initialRoomSize / 2;
+        j < midHeight + initialRoomSize / 2;
+        j++
+      ) {
+        // const eid = buildBaseEntity(i, j, 0, 0, world, "grass");
+        // Sprite.animated[eid] = 1;
+        // animations.set(eid, {
+        //   key: "Grass" + Phaser.Math.Between(1, 4),
+        //   repeat: -1,
+        //   frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+        // });
       }
     }
 
@@ -139,8 +150,14 @@ export default class Main extends Scene {
     // choose 3 random non-adjacent positions
     const positions: { x: number; y: number }[] = [];
     while (positions.length < 3) {
-      const x = Phaser.Math.Between(0, Map.width[map] - 1);
-      const y = Phaser.Math.Between(0, Map.height[map] - 1);
+      const x = Phaser.Math.Between(
+        midWidth - initialRoomSize / 2 + 2,
+        midWidth + initialRoomSize / 2 - 2
+      );
+      const y = Phaser.Math.Between(
+        midHeight - initialRoomSize / 2 + 2,
+        midHeight + initialRoomSize / 2 - 2
+      );
       if (
         positions.filter(
           (p) =>
@@ -170,17 +187,17 @@ export default class Main extends Scene {
         Position.y[b] += Phaser.Math.Between(-1, 1);
 
         // clamp the position to the map
-        if (Position.x[b] < 1) {
-          Position.x[b] = 1;
+        if (Position.x[b] < midWidth - initialRoomSize / 2 + 2) {
+          Position.x[b] = midWidth - initialRoomSize / 2 + 2;
         }
-        if (Position.x[b] > Map.width[map] - 2) {
-          Position.x[b] = Map.width[map] - 2;
+        if (Position.x[b] > midWidth + initialRoomSize / 2 - 2) {
+          Position.x[b] = midWidth + initialRoomSize / 2 - 2;
         }
-        if (Position.y[b] < 1) {
-          Position.y[b] = 1;
+        if (Position.y[b] < midHeight - initialRoomSize / 2 + 2) {
+          Position.y[b] = midHeight - initialRoomSize / 2 + 2;
         }
-        if (Position.y[b] > Map.height[map] - 2) {
-          Position.y[b] = Map.height[map] - 2;
+        if (Position.y[b] > midHeight + initialRoomSize / 2 - 2) {
+          Position.y[b] = midHeight + initialRoomSize / 2 - 2;
         }
 
         Destination.x[b] = Position.x[b];
@@ -189,6 +206,40 @@ export default class Main extends Scene {
       // Position.x[b] += 1;
       // Destination.x[b] += 1;
     });
+
+    // draw a perimeter of static blocks around the blocks
+    for (let i = 0; i <= Map.width[map] - 1; i++) {
+      for (let j = 0; j <= Map.height[map] - 1; j++) {
+        const eid = buildBaseEntity(i, j, -1, 0, world, "grass");
+        Sprite.animated[eid] = 1;
+        animations.set(eid, {
+          key: "Grass" + Phaser.Math.Between(1, 4),
+          repeat: -1,
+          frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+        });
+      }
+    }
+
+    for (
+      let i = midWidth - initialRoomSize / 2 - 1;
+      i <= midWidth + initialRoomSize / 2;
+      i++
+    ) {
+      for (
+        let j = midHeight - initialRoomSize / 2 - 1;
+        j <= midHeight + initialRoomSize / 2;
+        j++
+      ) {
+        if (
+          i === midWidth - initialRoomSize / 2 - 1 ||
+          i === midWidth + initialRoomSize / 2 ||
+          j === midHeight - initialRoomSize / 2 - 1 ||
+          j === midHeight + initialRoomSize / 2
+        ) {
+          const eid = buildStaticBlockEntity(i, j, 0, world);
+        }
+      }
+    }
 
     // buildIcyTileEntity(2, 2, 1, world);
     // buildIcyTileEntity(2, 3, 1, world);
@@ -247,7 +298,7 @@ export default class Main extends Scene {
     // buildGoalEntity(7, 9, 0, world);
     // buildGoalEntity(7, 5, 0, world);
 
-    this.player = buildPlayerEntity(4, 6, 3, world);
+    this.player = buildPlayerEntity(midWidth, midHeight, 3, world);
   }
 
   update(delta: number) {
