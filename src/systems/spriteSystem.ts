@@ -21,7 +21,7 @@ const spriteSystem = (world: World) => {
       0,
       0,
       texture,
-      Texture.frame[eid],
+      Texture.frame[eid]
     );
     sprites.set(eid, sprite);
   }
@@ -43,6 +43,7 @@ const spriteSystem = (world: World) => {
       sprite.setOrigin(anchor, anchor);
     }
   }
+
   return world;
 };
 

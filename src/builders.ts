@@ -20,6 +20,7 @@ export const buildBaseEntity = (
   z: number,
   frame: number,
   world: World,
+  texture: string = "sheet"
 ): number => {
   const eid = addEntity(world);
   addComponent(world, Position, eid);
@@ -41,9 +42,9 @@ export const buildBaseEntity = (
   Scale.y[eid] = 1;
   Velocity.x[eid] = 0;
   Velocity.y[eid] = 0;
-  Sprite.anchor[eid] = 0.5;
+  // Sprite.anchor[eid] = 0.5;
   Texture.frame[eid] = frame;
-  textures.set(eid, "sheet");
+  textures.set(eid, texture);
 
   return eid;
 };
@@ -52,7 +53,7 @@ export const buildIcyTileEntity = (
   x: number,
   y: number,
   z: number,
-  world: World,
+  world: World
 ): number => {
   const eid = buildBaseEntity(x, y, z, 3, world);
   addComponent(world, Icy, eid);
@@ -63,7 +64,7 @@ export const buildGoalEntity = (
   x: number,
   y: number,
   z: number,
-  world: World,
+  world: World
 ): number => {
   const eid = buildBaseEntity(x, y, z, 6, world);
   addComponent(world, Goal, eid);
@@ -74,7 +75,7 @@ export const buildStaticBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World,
+  world: World
 ): number => {
   const eid = buildBaseEntity(x, y, z, 4, world);
   addComponent(world, Destination, eid);
@@ -86,7 +87,7 @@ export const buildPushableBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World,
+  world: World
 ): number => {
   const eid = buildBaseEntity(x, y, z, 2, world);
   addComponent(world, Destination, eid);
@@ -99,11 +100,12 @@ export const buildPlayerEntity = (
   x: number,
   y: number,
   z: number,
-  world: World,
+  world: World
 ): number => {
-  const eid = buildBaseEntity(x, y, z, 1, world);
+  const eid = buildBaseEntity(x, y, z, 1, world, "bunny");
   addComponent(world, Collidable, eid);
   addComponent(world, Destination, eid);
   addComponent(world, Input, eid);
+  Sprite.animated[eid] = 1;
   return eid;
 };

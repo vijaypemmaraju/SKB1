@@ -11,7 +11,6 @@ const inputQuery = defineQuery([Input, Position, Destination]);
 const mapQuery = defineQuery([Map]);
 const inputSystem = (world: World) => {
   const ents = inputQuery(world);
-
   const up = game.scene.scenes[0].input.keyboard?.addKey("up");
   const down = game.scene.scenes[0].input.keyboard?.addKey("down");
   const left = game.scene.scenes[0].input.keyboard?.addKey("left");
@@ -22,12 +21,11 @@ const inputSystem = (world: World) => {
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     if (
-      Position.x[eid] !== Destination.x[eid] ||
-      Position.y[eid] !== Destination.y[eid]
+      Position.x[eid] === Destination.x[eid] &&
+      Position.y[eid] === Destination.y[eid]
     ) {
       Input.lastDirection[eid] = Input.direction[eid];
       Input.direction[eid] = 0;
-      continue;
     }
     let input = 0;
     if (up?.isDown) {

@@ -7,8 +7,10 @@ import Collidable from "../components/Colllidable";
 import Position from "../components/Position";
 import Pushable from "../components/Pushable";
 import Icy from "../components/Icy";
+import Sprite from "../components/Sprite";
+import sprites from "../resources/sprites";
 
-const inputQuery = defineQuery([Destination, Input]);
+const inputQuery = defineQuery([Destination, Input, Sprite]);
 const collidableQuery = defineQuery([Collidable, Position]);
 const pushableQuery = defineQuery([Pushable, Position]);
 const mapQuery = defineQuery([Map]);
@@ -43,6 +45,24 @@ const mapMovementSystem = (world: World) => {
     if (input & Direction.Right && !(lastInput & Direction.Right)) {
       Destination.x[eid] += 1;
       isInput = true;
+    }
+
+    const sprite = sprites.get(eid);
+
+    if (Input.direction[eid] != Direction.None) {
+      if (sprite?.anims.currentAnim?.key !== "Walk") {
+        sprite?.play({
+          key: "Walk",
+          repeat: -1,
+        });
+      }
+    } else {
+      if (sprite?.anims.currentAnim?.key !== "Idle") {
+        sprite?.play({
+          key: "Idle",
+          repeat: -1,
+        });
+      }
     }
 
     if (!isInput) {
@@ -106,7 +126,7 @@ const mapMovementSystem = (world: World) => {
     while (isCollision) {
       isCollision = resolveCollisions(
         eid,
-        collidables.filter((c) => !pushed.includes(c)),
+        collidables.filter((c) => !pushed.includes(c))
       );
     }
   }
@@ -160,7 +180,7 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
 const resolveIcy = (
   eid: number,
   icys: number[],
-  collidables: number[],
+  collidables: number[]
 ): boolean => {
   let foundIcy = false;
   for (let j = 0; j < icys.length; j++) {

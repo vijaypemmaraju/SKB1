@@ -32,7 +32,9 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
-      sprite.setFrame(Texture.frame[eid]);
+      if (!Sprite.animated[eid]) {
+        sprite.setFrame(Texture.frame[eid]);
+      }
     }
   }
   return world;
