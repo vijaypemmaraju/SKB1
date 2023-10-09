@@ -34,13 +34,15 @@ const spriteRenderingSystem = (world: World) => {
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
       if (Sprite.animated[eid]) {
-        const animation = animations.get(eid);
-        if (
-          animation &&
-          sprite.anims.currentAnim?.key !==
-            (animation as Phaser.Types.Animations.PlayAnimationConfig).key
-        ) {
-          sprite.play(animation);
+        const animation = animations.get(
+          eid
+        ) as Phaser.Types.Animations.PlayAnimationConfig;
+        if (animation && sprite.anims.currentAnim?.key !== animation.key) {
+          if (animation.showOnStart) {
+            sprite.play(animation);
+          } else {
+            sprite.playAfterRepeat(animation);
+          }
         }
       } else {
         sprite.setFrame(Texture.frame[eid]);

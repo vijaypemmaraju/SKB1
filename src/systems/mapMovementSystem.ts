@@ -52,13 +52,16 @@ const mapMovementSystem = (world: World) => {
 
     if (Input.direction[eid] != Direction.None) {
       if (sprite?.anims.currentAnim?.key !== "Walk") {
+        sprite!.anims.setRepeat(0);
         animations.set(eid, {
           key: "Walk",
           repeat: -1,
+          showOnStart: true,
         });
       }
     } else {
       if (sprite?.anims.currentAnim?.key !== "Idle") {
+        sprite!.anims.setRepeat(0);
         animations.set(eid, {
           key: "Idle",
           repeat: -1,
