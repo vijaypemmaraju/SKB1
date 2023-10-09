@@ -15,7 +15,7 @@ const inputSystem = (world: World) => {
   const down = game.scene.scenes[0].input.keyboard?.addKey("down");
   const left = game.scene.scenes[0].input.keyboard?.addKey("left");
   const right = game.scene.scenes[0].input.keyboard?.addKey("right");
-
+  const swipe = useStore.getState().swipe;
   const map = enterQuery(mapQuery)(world);
 
   for (let i = 0; i < ents.length; i++) {
@@ -28,44 +28,21 @@ const inputSystem = (world: World) => {
       Input.direction[eid] = 0;
     }
     let input = 0;
-    if (up?.isDown) {
+    if (up?.isDown || swipe.up) {
       input = 1;
     }
-    if (down?.isDown) {
+    if (down?.isDown || swipe.down) {
       input = 2;
     }
-    if (left?.isDown) {
+    if (left?.isDown || swipe.left) {
       input = 4;
     }
-    if (right?.isDown) {
+    if (right?.isDown || swipe.right) {
       input = 8;
     }
 
-    if (map.length > 0) {
-      const swipe = useStore.getState().swipe;
-      swipe.on("swipe", (swipe: any) => {
-        if (swipe.up) {
-          input = 1;
-        }
-        if (swipe.down) {
-          input = 2;
-        }
-        if (swipe.left) {
-          input = 4;
-        }
-        if (swipe.right) {
-          input = 8;
-        }
-
-        Input.lastDirection[eid] = Input.direction[eid];
-        Input.direction[eid] = input;
-      });
-    }
-    // if is mobile
-    if (!game.device.os.android && !game.device.os.iOS) {
-      Input.lastDirection[eid] = Input.direction[eid];
-      Input.direction[eid] = input;
-    }
+    Input.lastDirection[eid] = Input.direction[eid];
+    Input.direction[eid] = input;
   }
   return world;
 };

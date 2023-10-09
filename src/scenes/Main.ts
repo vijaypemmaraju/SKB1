@@ -94,7 +94,7 @@ export default class Main extends Scene {
 
     if (this.game.device.os.android || this.game.device.os.iOS) {
       const width = window.innerWidth;
-      const ratio = width / ((Map.width[map] - 2) * TILE_WIDTH);
+      const ratio = width / (Map.width[map] * TILE_WIDTH);
       this.cameras.main.setZoom(ratio);
     } else {
       this.cameras.main.setZoom(2);
@@ -262,10 +262,9 @@ export default class Main extends Scene {
       const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
       const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
       this.cameras.main.scrollX +=
-        (destinationX - this.cameras.main.scrollX) * 0.00001 * delta;
+        (destinationX - this.cameras.main.scrollX) * 0.000001 * delta;
       this.cameras.main.scrollY +=
-        (destinationY - this.cameras.main.scrollY) * 0.00001 * delta;
-      console.log(this.cameras.main.scrollX, this.cameras.main.scrollY);
+        (destinationY - this.cameras.main.scrollY) * 0.000001 * delta;
       if (
         Math.abs(destinationX - this.cameras.main.scrollX) < 1 &&
         Math.abs(destinationY - this.cameras.main.scrollY) < 1
