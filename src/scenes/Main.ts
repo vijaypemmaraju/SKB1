@@ -91,13 +91,14 @@ export default class Main extends Scene {
     addComponent(world, Map, map);
     Map.width[map] = 80;
     Map.height[map] = 80;
+    const midWidth = Map.width[map] / 2;
+    const midHeight = Map.height[map] / 2;
+    const initialRoomSize = 8;
 
     if (this.game.device.os.android || this.game.device.os.iOS) {
-      const width = window.innerWidth;
-      const ratio = width / (Map.width[map] * TILE_WIDTH);
-      this.cameras.main.setZoom(ratio);
+      this.cameras.main.setZoom(1.5);
     } else {
-      this.cameras.main.setZoom(2);
+      this.cameras.main.setZoom(1);
     }
 
     this.cameras.main.centerOn(
@@ -114,7 +115,7 @@ export default class Main extends Scene {
 
     const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
     const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.1);
-    const barrel = this.cameras.main.postFX.addBarrel(1.15);
+    const barrel = this.cameras.main.postFX.addBarrel(1.2);
     const tiltShift = this.cameras.main.postFX.addTiltShift(0.5);
 
     useStore.subscribe(() => {
@@ -139,12 +140,14 @@ export default class Main extends Scene {
           radius: 0.1,
           duration: 1000,
         });
+        this.tweens.add({
+          targets: this.cameras.main,
+          zoom: 2,
+          duration: 1000,
+        });
       }
     });
 
-    const midWidth = Map.width[map] / 2;
-    const midHeight = Map.height[map] / 2;
-    const initialRoomSize = 8;
     for (
       let i = midWidth - initialRoomSize / 2;
       i < midWidth + initialRoomSize / 2;
