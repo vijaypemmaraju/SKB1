@@ -359,11 +359,11 @@ export default class Main extends Scene {
     let points = [];
     points.push(0, 0);
     points.push(0, 10 * TILE_WIDTH);
-    // for (let i = 0; i < 200; i++) {
-    //   points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
-    // }
+    for (let i = 0; i < 200; i++) {
+      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
+    }
     points.push(Map.width[map] * TILE_WIDTH, 10 * TILE_WIDTH);
-    // points.push(Map.width[map] * TILE_WIDTH, 0);
+    points.push(Map.width[map] * TILE_WIDTH, 0);
 
     // this.oceanTop.alpha = 0;
     // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
@@ -375,7 +375,7 @@ export default class Main extends Scene {
     //   );
     // }
     // points.push(Map.width[map] * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
-    points.push(Map.width[map] * TILE_WIDTH, 0);
+    // points.push(Map.width[map] * TILE_WIDTH, 0);
     // points.push(
     //   (Map.width[map] + 1) * TILE_WIDTH,
     //   Map.height[map] * TILE_WIDTH
@@ -399,14 +399,14 @@ export default class Main extends Scene {
 
     const oceanTopPoints = this.oceanTop.geom.points;
 
-    // for (let i = 2; i < 202; i++) {
-    //   oceanTopPoints[i].y =
-    //     10 * TILE_WIDTH +
-    //     Math.cos(time * 0.0002 + i * 100) *
-    //       2 *
-    //       Math.sin(time * 0.001 + i * 25) +
-    //     Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
-    // }
+    for (let i = 2; i < 202; i++) {
+      oceanTopPoints[i].y =
+        10 * TILE_WIDTH +
+        Math.cos(time * 0.0002 + i * 100) *
+          2 *
+          Math.sin(time * 0.001 + i * 25) +
+        Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
+    }
 
     // for (let i = 204; i < 404; i++) {
     //   oceanTopPoints[i].x =
