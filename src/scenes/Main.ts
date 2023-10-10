@@ -32,6 +32,7 @@ export default class Main extends Scene {
   pipeline!: (world: World) => void;
   player!: number;
   isFollowing!: boolean;
+  oceanTop!: Phaser.GameObjects.Polygon;
 
   constructor() {
     super({ key: "Main" });
@@ -98,7 +99,7 @@ export default class Main extends Scene {
     if (this.game.device.os.android || this.game.device.os.iOS) {
       this.cameras.main.setZoom(1.5);
     } else {
-      this.cameras.main.setZoom(1);
+      this.cameras.main.setZoom(2.5);
     }
 
     this.cameras.main.centerOn(
@@ -132,7 +133,7 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: barrel,
-          amount: 1.04,
+          amount: 1,
           duration: 1000,
         });
         this.tweens.add({
@@ -143,7 +144,7 @@ export default class Main extends Scene {
         this.tweens.add({
           targets: this.cameras.main,
           zoom: 2,
-          duration: 1000,
+          duration: 100,
         });
       }
     });
@@ -239,13 +240,18 @@ export default class Main extends Scene {
     // draw a perimeter of static blocks around the blocks
     for (let i = 0; i <= Map.width[map] - 1; i++) {
       for (let j = 0; j <= Map.height[map] - 1; j++) {
-        const eid = buildBaseEntity(i, j, -1, 0, world, "grass");
-        Sprite.animated[eid] = 1;
-        animations.set(eid, {
-          key: "Grass" + Phaser.Math.Between(1, 4),
-          repeat: -1,
-          frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
-        });
+        const isGrass = j >= midHeight - initialRoomSize / 2 - 1;
+        let texture = isGrass ? "grass" : "sheet";
+        let frame = isGrass ? 0 : 8;
+        const eid = buildBaseEntity(i, j, -1, frame, world, texture);
+        if (isGrass) {
+          Sprite.animated[eid] = 1;
+          animations.set(eid, {
+            key: "Grass" + Phaser.Math.Between(1, 4),
+            repeat: -1,
+            frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+          });
+        }
       }
     }
 
@@ -265,7 +271,7 @@ export default class Main extends Scene {
           j === midHeight - initialRoomSize / 2 - 1 ||
           j === midHeight + initialRoomSize / 2
         ) {
-          const eid = buildStaticBlockEntity(i, j, 0, world);
+          // const eid = buildStaticBlockEntity(i, j, 0, world);
         }
       }
     }
@@ -328,15 +334,68 @@ export default class Main extends Scene {
     // buildGoalEntity(7, 5, 0, world);
 
     this.player = buildPlayerEntity(midWidth, midHeight, 3, world);
+
+    // build ocean
+    // create a polygon that is the width of the map and 10 tiles high
+    // make sure to have at least 50 points on the bottom side of the polygon
+    let points = [];
+    points.push(0, 30 * TILE_WIDTH);
+    points.push(0, 40 * TILE_WIDTH);
+    for (let i = 0; i < 200; i++) {
+      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 40 * TILE_WIDTH);
+    }
+    points.push(Map.width[map] * TILE_WIDTH, 40 * TILE_WIDTH);
+    points.push(Map.width[map] * TILE_WIDTH, 30 * TILE_WIDTH);
+    this.oceanTop = this.add.polygon(
+      (Map.width[map] * TILE_WIDTH) / 2,
+      0,
+      points,
+      0x0000ff
+    );
+    this.oceanTop.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.1);
+    this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
+    this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
+    this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
+    this.oceanTop.alpha = 0.9;
+    // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
+    // points = [];
+    // points.push(0, 0);
+    // points.push(40 * TILE_WIDTH, 0);
+    // for (let i = 0; i < 200; i++) {
+    //   points.push(40 * TILE_WIDTH, Map.height[map] * TILE_WIDTH * (i / 200));
+    // }
+    // points.push(40 * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
+    // points.push(0, Map.height[map] * TILE_WIDTH);
+    // this.oceanLeft = this.add.polygon(
+    //   0,
+    //   (Map.height[map] * TILE_WIDTH) / 2,
+    //   points,
+    //   0x0000ff
+    // );
+    // this.oceanLeft.postFX.addGlow(0xffffff, 2.5, 0, false);
   }
 
-  update(delta: number) {
+  update(time: number, delta: number) {
     // Update game objects here
     this.pipeline(this.world);
+
+    const points = this.oceanTop.geom.points;
+
+    for (let i = 2; i < 202; i++) {
+      points[i].y =
+        41 * TILE_WIDTH +
+        Math.cos(time * 0.0002 + i * 100) *
+          2 *
+          Math.sin(time * 0.001 + i * 25) +
+        Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
+    }
+
+    this.oceanTop.setTo(points);
 
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
     }
+
     const playerSprite = sprites.get(this.player);
     if (useStore.getState().hasWon && playerSprite && !this.isFollowing) {
       const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
@@ -346,8 +405,8 @@ export default class Main extends Scene {
       this.cameras.main.scrollY +=
         (destinationY - this.cameras.main.scrollY) * 0.00001 * delta;
       if (
-        Math.abs(destinationX - this.cameras.main.scrollX) < 1 &&
-        Math.abs(destinationY - this.cameras.main.scrollY) < 1
+        Math.abs(destinationX - this.cameras.main.scrollX) < delta &&
+        Math.abs(destinationY - this.cameras.main.scrollY) < delta
       ) {
         this.isFollowing = true;
         this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
