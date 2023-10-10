@@ -26,6 +26,9 @@ import Position from "../components/Position";
 import Destination from "../components/Destination";
 import animations from "../resources/animations";
 import Sprite from "../components/Sprite";
+import conditionalDestroySystem from "../systems/conditionalDestroySystem";
+import ConditionalDestroy from "../components/CoditionalDestroy";
+import conditionalDestroys from "../resources/conditionalDestroys";
 
 export default class Main extends Scene {
   world!: World;
@@ -53,7 +56,8 @@ export default class Main extends Scene {
       mapMovementSystem,
       movementSystem,
       goalSystem,
-      spriteRenderingSystem
+      spriteRenderingSystem,
+      conditionalDestroySystem
     );
 
     this.world = createWorld<World>();
@@ -90,8 +94,8 @@ export default class Main extends Scene {
 
     const map = addEntity(world);
     addComponent(world, Map, map);
-    Map.width[map] = 80;
-    Map.height[map] = 80;
+    Map.width[map] = 64;
+    Map.height[map] = 64;
     const midWidth = Map.width[map] / 2;
     const midHeight = Map.height[map] / 2;
     const initialRoomSize = 8;
@@ -99,7 +103,7 @@ export default class Main extends Scene {
     if (this.game.device.os.android || this.game.device.os.iOS) {
       this.cameras.main.setZoom(1.5);
     } else {
-      this.cameras.main.setZoom(2.5);
+      this.cameras.main.setZoom(2);
     }
 
     this.cameras.main.centerOn(
@@ -107,10 +111,10 @@ export default class Main extends Scene {
       Map.height[map] * TILE_WIDTH * 0.5
     );
 
-    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.01);
+    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.1);
     this.tweens.add({
       targets: vignette,
-      radius: 0.4,
+      radius: 0.3,
       duration: 1000,
     });
 
@@ -143,8 +147,9 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: this.cameras.main,
-          zoom: 2,
-          duration: 100,
+          zoom: 2.5,
+          duration: 1500,
+          ease: Phaser.Math.Easing.Quadratic.InOut,
         });
       }
     });
@@ -241,8 +246,8 @@ export default class Main extends Scene {
     for (let i = 0; i <= Map.width[map] - 1; i++) {
       for (let j = 0; j <= Map.height[map] - 1; j++) {
         const isGrass = j >= midHeight - initialRoomSize / 2 - 1;
-        let texture = isGrass ? "grass" : "sheet";
-        let frame = isGrass ? 0 : 8;
+        let texture = isGrass ? "grass" : "grass";
+        let frame = isGrass ? 0 : 0;
         const eid = buildBaseEntity(i, j, -1, frame, world, texture);
         if (isGrass) {
           Sprite.animated[eid] = 1;
@@ -255,6 +260,7 @@ export default class Main extends Scene {
       }
     }
 
+    const predicate = () => useStore.getState().hasWon;
     for (
       let i = midWidth - initialRoomSize / 2 - 1;
       i <= midWidth + initialRoomSize / 2;
@@ -271,7 +277,11 @@ export default class Main extends Scene {
           j === midHeight - initialRoomSize / 2 - 1 ||
           j === midHeight + initialRoomSize / 2
         ) {
-          // const eid = buildStaticBlockEntity(i, j, 0, world);
+          const eid = buildStaticBlockEntity(i, j, 0, world);
+          addComponent(world, ConditionalDestroy, eid);
+          const predicates = conditionalDestroys.get(eid) || [];
+          predicates.push(predicate);
+          conditionalDestroys.set(eid, predicates);
         }
       }
     }
@@ -339,13 +349,13 @@ export default class Main extends Scene {
     // create a polygon that is the width of the map and 10 tiles high
     // make sure to have at least 50 points on the bottom side of the polygon
     let points = [];
-    points.push(0, 30 * TILE_WIDTH);
-    points.push(0, 40 * TILE_WIDTH);
+    points.push(0, 0 * TILE_WIDTH);
+    points.push(0, 10 * TILE_WIDTH);
     for (let i = 0; i < 200; i++) {
-      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 40 * TILE_WIDTH);
+      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
     }
-    points.push(Map.width[map] * TILE_WIDTH, 40 * TILE_WIDTH);
-    points.push(Map.width[map] * TILE_WIDTH, 30 * TILE_WIDTH);
+    points.push(Map.width[map] * TILE_WIDTH, 10 * TILE_WIDTH);
+    points.push(Map.width[map] * TILE_WIDTH, 0 * TILE_WIDTH);
     this.oceanTop = this.add.polygon(
       (Map.width[map] * TILE_WIDTH) / 2,
       0,
@@ -356,15 +366,15 @@ export default class Main extends Scene {
     this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
     this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
     this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
-    this.oceanTop.alpha = 0.9;
+    // this.oceanTop.alpha = 0;
     // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
     // points = [];
     // points.push(0, 0);
-    // points.push(40 * TILE_WIDTH, 0);
+    // points.push(10 * TILE_WIDTH, 0);
     // for (let i = 0; i < 200; i++) {
-    //   points.push(40 * TILE_WIDTH, Map.height[map] * TILE_WIDTH * (i / 200));
+    //   points.push(10 * TILE_WIDTH, Map.height[map] * TILE_WIDTH * (i / 200));
     // }
-    // points.push(40 * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
+    // points.push(10 * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
     // points.push(0, Map.height[map] * TILE_WIDTH);
     // this.oceanLeft = this.add.polygon(
     //   0,
@@ -383,7 +393,7 @@ export default class Main extends Scene {
 
     for (let i = 2; i < 202; i++) {
       points[i].y =
-        41 * TILE_WIDTH +
+        10 * TILE_WIDTH +
         Math.cos(time * 0.0002 + i * 100) *
           2 *
           Math.sin(time * 0.001 + i * 25) +
