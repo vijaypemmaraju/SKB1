@@ -36,6 +36,7 @@ export default class Main extends Scene {
   player!: number;
   isFollowing!: boolean;
   oceanTop!: Phaser.GameObjects.Polygon;
+  oceanLeft: Phaser.GameObjects.Polygon;
 
   constructor() {
     super({ key: "Main" });
@@ -119,15 +120,20 @@ export default class Main extends Scene {
     });
 
     const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
-    const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.1);
-    const barrel = this.cameras.main.postFX.addBarrel(1.2);
-    const tiltShift = this.cameras.main.postFX.addTiltShift(0.5);
+    const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 2.1);
+    const barrel = this.cameras.main.postFX.addBarrel(2.6);
+    const tiltShift = this.cameras.main.postFX.addTiltShift(9.5);
 
     useStore.subscribe(() => {
       if (useStore.getState().hasWon) {
         this.tweens.add({
           targets: colorMatrix,
           alpha: 0,
+          duration: 1000,
+        });
+        this.tweens.add({
+          targets: bloom,
+          strength: 1,
           duration: 1000,
         });
         this.tweens.add({
@@ -153,6 +159,8 @@ export default class Main extends Scene {
         });
       }
     });
+
+    useStore.setState({ hasWon: true });
 
     for (
       let i = midWidth - initialRoomSize / 2;
@@ -349,13 +357,30 @@ export default class Main extends Scene {
     // create a polygon that is the width of the map and 10 tiles high
     // make sure to have at least 50 points on the bottom side of the polygon
     let points = [];
-    points.push(0, 0 * TILE_WIDTH);
+    points.push(0, 0);
     points.push(0, 10 * TILE_WIDTH);
-    for (let i = 0; i < 200; i++) {
-      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
-    }
+    // for (let i = 0; i < 200; i++) {
+    //   points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
+    // }
     points.push(Map.width[map] * TILE_WIDTH, 10 * TILE_WIDTH);
-    points.push(Map.width[map] * TILE_WIDTH, 0 * TILE_WIDTH);
+    // points.push(Map.width[map] * TILE_WIDTH, 0);
+
+    // this.oceanTop.alpha = 0;
+    // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
+    // points.push(0, 0);
+    // for (let j = 0; j < 200; j++) {
+    //   points.push(
+    //     Map.width[map] * TILE_WIDTH,
+    //     10 * TILE_WIDTH + Map.height[map] * TILE_WIDTH * (j / 200)
+    //   );
+    // }
+    // points.push(Map.width[map] * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
+    points.push(Map.width[map] * TILE_WIDTH, 0);
+    // points.push(
+    //   (Map.width[map] + 1) * TILE_WIDTH,
+    //   Map.height[map] * TILE_WIDTH
+    // );
+
     this.oceanTop = this.add.polygon(
       (Map.width[map] * TILE_WIDTH) / 2,
       0,
@@ -366,41 +391,33 @@ export default class Main extends Scene {
     this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
     this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
     this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
-    // this.oceanTop.alpha = 0;
-    // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
-    // points = [];
-    // points.push(0, 0);
-    // points.push(10 * TILE_WIDTH, 0);
-    // for (let i = 0; i < 200; i++) {
-    //   points.push(10 * TILE_WIDTH, Map.height[map] * TILE_WIDTH * (i / 200));
-    // }
-    // points.push(10 * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
-    // points.push(0, Map.height[map] * TILE_WIDTH);
-    // this.oceanLeft = this.add.polygon(
-    //   0,
-    //   (Map.height[map] * TILE_WIDTH) / 2,
-    //   points,
-    //   0x0000ff
-    // );
-    // this.oceanLeft.postFX.addGlow(0xffffff, 2.5, 0, false);
   }
 
   update(time: number, delta: number) {
     // Update game objects here
     this.pipeline(this.world);
 
-    const points = this.oceanTop.geom.points;
+    const oceanTopPoints = this.oceanTop.geom.points;
 
-    for (let i = 2; i < 202; i++) {
-      points[i].y =
-        10 * TILE_WIDTH +
-        Math.cos(time * 0.0002 + i * 100) *
-          2 *
-          Math.sin(time * 0.001 + i * 25) +
-        Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
-    }
+    // for (let i = 2; i < 202; i++) {
+    //   oceanTopPoints[i].y =
+    //     10 * TILE_WIDTH +
+    //     Math.cos(time * 0.0002 + i * 100) *
+    //       2 *
+    //       Math.sin(time * 0.001 + i * 25) +
+    //     Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
+    // }
 
-    this.oceanTop.setTo(points);
+    // for (let i = 204; i < 404; i++) {
+    //   oceanTopPoints[i].x =
+    //     10 * TILE_WIDTH +
+    //     Math.cos(time * 0.0002 + i * 100) *
+    //       2 *
+    //       Math.sin(time * 0.001 + i * 25) +
+    //     Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
+    // }
+
+    this.oceanTop.setTo(oceanTopPoints);
 
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
