@@ -30,6 +30,8 @@
   "dependencies": {
     "bitecs": "^0.3.40",
     "d3-delaunay": "^6.0.4",
+    "d3-force": "^3.0.0",
+    "force-graph": "^1.43.4",
     "phaser": "^3.60.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
