@@ -29,6 +29,7 @@ import Sprite from "../components/Sprite";
 import conditionalDestroySystem from "../systems/conditionalDestroySystem";
 import ConditionalDestroy from "../components/CoditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
+import { NodeType } from "../graphGenerator";
 
 export default class Main extends Scene {
   world!: World;
@@ -250,23 +251,22 @@ export default class Main extends Scene {
       // Destination.x[b] += 1;
     });
 
-    // draw a perimeter of static blocks around the blocks
-    for (let i = 0; i <= Map.width[map] - 1; i++) {
-      for (let j = 0; j <= Map.height[map] - 1; j++) {
-        const isGrass = j >= midHeight - initialRoomSize / 2 - 1;
-        let texture = isGrass ? "grass" : "grass";
-        let frame = isGrass ? 0 : 0;
-        const eid = buildBaseEntity(i, j, -1, frame, world, texture);
-        if (isGrass) {
-          Sprite.animated[eid] = 1;
-          animations.set(eid, {
-            key: "Grass" + Phaser.Math.Between(1, 4),
-            repeat: -1,
-            frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
-          });
-        }
-      }
-    }
+    // for (let i = 0; i <= Map.width[map] - 1; i++) {
+    //   for (let j = 0; j <= Map.height[map] - 1; j++) {
+    //     const isGrass = j >= midHeight - initialRoomSize / 2 - 1;
+    //     let texture = isGrass ? "grass" : "grass";
+    //     let frame = isGrass ? 0 : 0;
+    //     const eid = buildBaseEntity(i, j, -1, frame, world, texture);
+    //     if (isGrass) {
+    //       Sprite.animated[eid] = 1;
+    //       animations.set(eid, {
+    //         key: "Grass" + Phaser.Math.Between(1, 4),
+    //         repeat: -1,
+    //         frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+    //       });
+    //     }
+    //   }
+    // }
 
     const predicate = () => useStore.getState().hasWon;
     for (
@@ -391,6 +391,94 @@ export default class Main extends Scene {
     this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
     this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
     this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
+
+    setTimeout(() => {
+      const graph = useStore.getState().forceGraphInstance;
+      const data = graph?.graphData();
+      const lowestX = Math.min(
+        ...(data?.nodes.map((n) => (n as NodeType).x) || [])
+      );
+      const lowestY = Math.min(
+        ...(data?.nodes.map((n) => (n as NodeType).y) || [])
+      );
+
+      const movedData = {
+        nodes: data?.nodes.map((n) => ({
+          ...n,
+          x: (n as NodeType).x - lowestX,
+          y: (n as NodeType).y - lowestY,
+        })),
+        links: data?.links.map((l) => ({
+          ...l,
+          source: {
+            ...l.source,
+            x: (l.source as NodeType).x - lowestX,
+            y: (l.source as NodeType).y - lowestY,
+          },
+          target: {
+            ...l.target,
+            x: (l.target as NodeType).x - lowestX,
+            y: (l.target as NodeType).y - lowestY,
+          },
+        })),
+      };
+
+      console.log(movedData);
+
+      const sparseMap: number[][] = [];
+      for (let i = 0; i < 100; i++) {
+        sparseMap[i] = [];
+        for (let j = 0; j < 100; j++) {
+          sparseMap[i][j] = 0;
+        }
+      }
+      for (const n of movedData?.nodes || []) {
+        buildBaseEntity(
+          Math.floor(n.x / 5),
+          Math.floor(n.y / 5),
+          2,
+          0,
+          world,
+          "grass"
+        );
+        console.log(Math.floor(n.x / 5), Math.floor(n.y / 5));
+        sparseMap[Math.floor(n.x / 5)][Math.floor(n.y / 5)] = 1;
+      }
+      for (const l of movedData?.links || []) {
+        const startX = Math.floor((l.source as NodeType).x / 5);
+        const startY = Math.floor((l.source as NodeType).y / 5);
+        const endX = Math.floor((l.target as NodeType).x / 5);
+        const endY = Math.floor((l.target as NodeType).y / 5);
+
+        // integer step from start to end
+        const stepX = endX - startX;
+        const stepY = endY - startY;
+        const step = Math.max(Math.abs(stepX), Math.abs(stepY));
+        const stepXNormalized = stepX / step;
+        const stepYNormalized = stepY / step;
+
+        let x = startX;
+        let y = startY;
+        for (let i = 0; i < step; i++) {
+          x += stepXNormalized;
+          y += stepYNormalized;
+          buildBaseEntity(Math.floor(x), Math.floor(y), 2, 0, world, "grass");
+          sparseMap[Math.floor(x)][Math.floor(y)] = 1;
+        }
+      }
+      for (let i = 0; i < 100; i++) {
+        const firstNonZero = sparseMap[i].indexOf(1);
+        const lastNonZero = sparseMap[i].lastIndexOf(1);
+        console.log(firstNonZero, lastNonZero);
+        if (firstNonZero !== -1 && lastNonZero !== -1) {
+          for (let j = firstNonZero; j < lastNonZero; j++) {
+            sparseMap[i][j] = 1;
+            buildBaseEntity(i, j, 2, 0, world, "grass");
+          }
+        }
+      }
+      console.log(sparseMap);
+    }, 2500);
   }
 
   update(time: number, delta: number) {
