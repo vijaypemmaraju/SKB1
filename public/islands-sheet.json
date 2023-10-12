@@ -1,0 +1,27 @@
+{ "frames": [
+   {
+    "filename": "0",
+    "frame": { "x": 2, "y": 2, "w": 994, "h": 34 },
+    "rotated": false,
+    "trimmed": true,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 992, "h": 32 },
+    "sourceSize": { "w": 987, "h": 21 },
+    "duration": 100
+   }
+ ],
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.25",
+  "image": "islands-sheet-sheet.png",
+  "format": "I8",
+  "size": { "w": 997, "h": 37 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Layer 1", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}

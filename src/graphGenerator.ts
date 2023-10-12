@@ -1,3 +1,5 @@
+import randomColor from "randomcolor";
+import Phaser from "phaser";
 import { LinkObject, NodeObject } from "force-graph";
 
 export type NodeType = NodeObject & {
@@ -7,20 +9,21 @@ export type NodeType = NodeObject & {
 
 export const GROUP_NODE_SIZES = {
   ROOT: 20,
-  PUZZLE: 5,
-  CLUE: 5,
-  LOCK: 5,
-  KEY: 5,
+  PUZZLE: 10,
+  CLUE: 3,
+  LOCK: 8,
+  KEY: 4,
   ROOM: 20,
 };
 
+// pretty pastel colors
 export const GROUP_COLORS = {
-  ROOT: "#000000",
-  PUZZLE: "#0000FF",
-  CLUE: "#00FF00",
-  LOCK: "#FF0000",
-  KEY: "#FFFF00",
-  ROOM: "#FFFFFF",
+  ROOT: randomColor(),
+  PUZZLE: randomColor(),
+  CLUE: randomColor(),
+  LOCK: randomColor(),
+  KEY: randomColor(),
+  ROOM: randomColor(),
 };
 
 export type LinkType = LinkObject & {
@@ -66,7 +69,10 @@ const KEYS = ["Troll Key", "Bridge Key", "Boulder Key"];
 const graphGenerator = () => {
   const nodes: NodeType[] = [];
   const links: LinkType[] = [];
-
+  // nodes.push({
+  //   id: "ROOT",
+  //   group: "ROOT",
+  // });
   // Add 5 random rooms, non-duplicate
   let roomNames = [...ROOMS];
   // shuffle rooms
@@ -85,19 +91,29 @@ const graphGenerator = () => {
       group: "ROOM",
     });
 
-    // Add 1 puzzle per room
-    const puzzleName = PUZZLES[i];
-    puzzles.push(puzzleName);
-    nodes.push({
-      id: puzzleName,
-      group: "PUZZLE",
-    });
+    // if (Phaser.Math.Between(0, 1) === 0) {
+    //   links.push({
+    //     source: "ROOT",
+    //     target: roomName,
+    //     group: "LEADS_TO",
+    //   });
+    // }
 
-    links.push({
-      source: roomName,
-      target: puzzleName,
-      group: "CONTAINS",
-    });
+    // Add 1 puzzle per room
+    if (i < PUZZLES.length - 1) {
+      const puzzleName = PUZZLES[i];
+      puzzles.push(puzzleName);
+      nodes.push({
+        id: puzzleName,
+        group: "PUZZLE",
+      });
+
+      links.push({
+        source: roomName,
+        target: puzzleName,
+        group: "CONTAINS",
+      });
+    }
   }
 
   // // // add clues for each puzzle to random rooms
@@ -183,6 +199,34 @@ const graphGenerator = () => {
       }
     }
   }
+
+  // find any orphan rooms and connect them to another room
+
+  // const orphanRooms = nodes.filter(
+  //   (node) =>
+  //     node.group === "ROOM" &&
+  //     !links.some((link) => link.source === node.id || link.target === node.id)
+  // );
+
+  // for (const orphanRoom of orphanRooms) {
+  //   const otherRooms = nodes.filter(
+  //     (node) =>
+  //       node.group === "ROOM" &&
+  //       !links.some(
+  //         (link) => link.source === node.id || link.target === node.id
+  //       ) &&
+  //       node.id !== orphanRoom.id
+  //   );
+
+  //   if (otherRooms.length > 0) {
+  //     const otherRoom = otherRooms[0];
+  //     links.push({
+  //       source: orphanRoom.id,
+  //       target: otherRoom.id,
+  //       group: "LEADS_TO",
+  //     });
+  //   }
+  // }
 
   return { nodes, links };
 };

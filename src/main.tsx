@@ -24,6 +24,7 @@ graph
   .cooldownTime(2000)
   .d3AlphaDecay(0)
   .d3VelocityDecay(0)
+  .height(window.innerHeight / 2)
   // Add collision and bounding box forces
   .nodeId("id")
   .nodeAutoColorBy("group")

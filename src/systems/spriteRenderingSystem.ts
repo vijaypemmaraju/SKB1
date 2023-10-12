@@ -33,6 +33,12 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
+      const text = sprite.text;
+      if (text) {
+        text.x = sprite.x;
+        text.y = sprite.y;
+        text.text = sprite.depth.toString();
+      }
       if (Sprite.animated[eid]) {
         const animation = animations.get(
           eid

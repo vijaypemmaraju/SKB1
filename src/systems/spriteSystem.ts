@@ -23,6 +23,18 @@ const spriteSystem = (world: World) => {
       texture,
       Texture.frame[eid]
     );
+    // const text = game.scene.scenes[0].add.text(
+    //   0,
+    //   0,
+    //   Texture.frame[eid].toString(),
+    //   {
+    //     fontFamily: "monospace",
+    //     fontSize: "8px",
+    //     color: "#ffffff",
+    //   }
+    // );
+    // sprite.text = text;
+    // text.depth = 1000;
     sprites.set(eid, sprite);
   }
   for (let i = 0; i < exitingSprites.length; i++) {

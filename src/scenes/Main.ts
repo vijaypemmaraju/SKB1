@@ -30,6 +30,7 @@ import conditionalDestroySystem from "../systems/conditionalDestroySystem";
 import ConditionalDestroy from "../components/CoditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
 import { NodeType } from "../graphGenerator";
+import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
 
 export default class Main extends Scene {
   world!: World;
@@ -68,6 +69,7 @@ export default class Main extends Scene {
     this.load.atlas("sheet", "sheet.png", "sheet.json");
     this.load.aseprite("bunny", "bunny.png", "bunny.json");
     this.load.aseprite("grass", "grass.png", "grass.json");
+    this.load.aseprite("autotile", "islands-sheet.png", "islands.json");
   }
 
   create() {
@@ -391,16 +393,15 @@ export default class Main extends Scene {
     this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
     this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
     this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
+    this.oceanTop.visible = false;
 
     setTimeout(() => {
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
-      const lowestX = Math.min(
-        ...(data?.nodes.map((n) => (n as NodeType).x) || [])
-      );
-      const lowestY = Math.min(
-        ...(data?.nodes.map((n) => (n as NodeType).y) || [])
-      );
+      const lowestX =
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).x) || [])) - 20;
+      const lowestY =
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).y) || [])) - 20;
 
       const movedData = {
         nodes: data?.nodes.map((n) => ({
@@ -423,61 +424,199 @@ export default class Main extends Scene {
         })),
       };
 
-      console.log(movedData);
-
       const sparseMap: number[][] = [];
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 200; i++) {
         sparseMap[i] = [];
-        for (let j = 0; j < 100; j++) {
+        for (let j = 0; j < 200; j++) {
           sparseMap[i][j] = 0;
         }
       }
-      for (const n of movedData?.nodes || []) {
-        buildBaseEntity(
-          Math.floor(n.x / 5),
-          Math.floor(n.y / 5),
-          2,
-          0,
-          world,
-          "grass"
-        );
-        console.log(Math.floor(n.x / 5), Math.floor(n.y / 5));
-        sparseMap[Math.floor(n.x / 5)][Math.floor(n.y / 5)] = 1;
-      }
-      for (const l of movedData?.links || []) {
-        const startX = Math.floor((l.source as NodeType).x / 5);
-        const startY = Math.floor((l.source as NodeType).y / 5);
-        const endX = Math.floor((l.target as NodeType).x / 5);
-        const endY = Math.floor((l.target as NodeType).y / 5);
 
-        // integer step from start to end
-        const stepX = endX - startX;
-        const stepY = endY - startY;
-        const step = Math.max(Math.abs(stepX), Math.abs(stepY));
-        const stepXNormalized = stepX / step;
-        const stepYNormalized = stepY / step;
-
-        let x = startX;
-        let y = startY;
-        for (let i = 0; i < step; i++) {
-          x += stepXNormalized;
-          y += stepYNormalized;
-          buildBaseEntity(Math.floor(x), Math.floor(y), 2, 0, world, "grass");
-          sparseMap[Math.floor(x)][Math.floor(y)] = 1;
+      const bounds = graph?.getGraphBbox();
+      const [minX, minY, maxX, maxY] = [
+        Math.floor(bounds!.x[0] - lowestX),
+        Math.floor(bounds!.y[0] - lowestY),
+        Math.floor(bounds!.x[1] - lowestX),
+        Math.floor(bounds!.y[1] - lowestY),
+      ];
+      const width = maxX - minX;
+      const height = maxY - minY;
+      const scaledWidth = Math.floor(width / 8);
+      const scaledHeight = Math.floor(height / 8);
+      for (let i = 0; i < scaledHeight; i++) {
+        sparseMap[i] ||= [];
+        for (let j = 0; j < scaledWidth; j++) {
+          sparseMap[i][j] = 1;
         }
       }
-      for (let i = 0; i < 100; i++) {
-        const firstNonZero = sparseMap[i].indexOf(1);
-        const lastNonZero = sparseMap[i].lastIndexOf(1);
-        console.log(firstNonZero, lastNonZero);
-        if (firstNonZero !== -1 && lastNonZero !== -1) {
-          for (let j = firstNonZero; j < lastNonZero; j++) {
-            sparseMap[i][j] = 1;
-            buildBaseEntity(i, j, 2, 0, world, "grass");
+      // for (const n of movedData?.nodes || []) {
+      //   // buildBaseEntity(
+      //   //   Math.floor(n.x / 3),
+      //   //   Math.floor(n.y / 3),
+      //   //   2,
+      //   //   0,
+      //   //   world,
+      //   //   "autotile"
+      //   // );
+      //   const y = Math.floor(n.y / 8);
+      //   const x = Math.floor(n.x / 8);
+      //   sparseMap[y - 1][x] = 1;
+      //   sparseMap[y][x - 1] = 1;
+      //   sparseMap[y][x] = 1;
+      //   sparseMap[y][x + 1] = 1;
+      //   sparseMap[y + 1][x] = 1;
+      // }
+      // for (const l of movedData?.links || []) {
+      //   const startX = Math.floor((l.source as NodeType).x / 8);
+      //   const startY = Math.floor((l.source as NodeType).y / 8);
+      //   const endX = Math.floor((l.target as NodeType).x / 8);
+      //   const endY = Math.floor((l.target as NodeType).y / 8);
+
+      //   // integer step from start to end
+      //   const stepX = endX - startX;
+      //   const stepY = endY - startY;
+      //   const step = Math.max(Math.abs(stepX), Math.abs(stepY));
+      //   const stepXNormalized = stepX / step;
+      //   const stepYNormalized = stepY / step;
+
+      //   let x = startX;
+      //   let y = startY;
+      //   for (let i = 0; i < step; i++) {
+      //     x += stepXNormalized;
+      //     y += stepYNormalized;
+      //     if (!sparseMap[Math.floor(y)]) {
+      //       console.log("sparseMap[Math.floor(y)]", Math.floor(y));
+      //     }
+      //     sparseMap[Math.floor(y) - 1][Math.floor(x)] = 1;
+      //     sparseMap[Math.floor(y)][Math.floor(x) - 1] = 1;
+      //     sparseMap[Math.floor(y)][Math.floor(x)] = 1;
+      //     sparseMap[Math.floor(y)][Math.floor(x) + 1] = 1;
+      //     sparseMap[Math.floor(y) + 1][Math.floor(x)] = 1;
+      //   }
+      // }
+      // for (let i = 0; i < 200; i++) {
+      //   const firstNonZero = sparseMap[i].indexOf(1);
+      //   const lastNonZero = sparseMap[i].lastIndexOf(1);
+      //   if (firstNonZero !== -1 && lastNonZero !== -1) {
+      //     for (let j = firstNonZero; j < lastNonZero; j++) {
+      //       if (sparseMap[i]) sparseMap[i][j] = 1;
+      //     }
+      //   }
+      // }
+      // for (let j = 0; j < 200; j++) {
+      //   const firstNonZero = sparseMap.map((row) => row[j]).indexOf(1);
+      //   const lastNonZero = sparseMap.map((row) => row[j]).lastIndexOf(1);
+      //   if (firstNonZero !== -1 && lastNonZero !== -1) {
+      //     for (let i = firstNonZero; i < lastNonZero; i++) {
+      //       if (sparseMap[i]) sparseMap[i][j] = 1;
+      //     }
+      //   }
+      // }
+      console.table(sparseMap);
+      const bitmasks: number[][] = [];
+      const uniqueBitmasks = new Set<number>();
+      for (let i = 0; i <= scaledWidth + 5; i++) {
+        bitmasks[i] = [];
+        for (let j = 0; j <= scaledHeight + 5; j++) {
+          // if (sparseMap[i][j] === 0) {
+          //   continue;
+          // }
+          let bitmask = 0;
+          let foundEdge = false;
+          // north
+          if (sparseMap[j - 1]?.[i]) {
+            bitmask += 1;
           }
+          // northeast
+          if (
+            sparseMap[j - 1]?.[i + 1] &&
+            (sparseMap[j - j]?.[i] || sparseMap[j]?.[i + 1])
+          ) {
+            bitmask += 2;
+          }
+          // east
+          if (sparseMap[j]?.[i + 1]) {
+            bitmask += 4;
+          }
+          // southeast
+          if (
+            sparseMap[j + 1]?.[i + 1] &&
+            (sparseMap[j + 1]?.[i] || sparseMap[j]?.[i + 1])
+          ) {
+            bitmask += 8;
+          }
+          // south
+          if (sparseMap[j + 1]?.[i]) {
+            bitmask += 16;
+          }
+          // southwest
+          if (
+            sparseMap[j + 1]?.[i - 1] &&
+            (sparseMap[j + 1]?.[i] || sparseMap[j]?.[i - 1])
+          ) {
+            bitmask += 32;
+          }
+          // west
+          if (sparseMap[j]?.[i - 1]) {
+            bitmask += 64;
+          }
+          // northwest
+          if (
+            sparseMap[j - 1]?.[i - 1] &&
+            (sparseMap[j]?.[i - 1] || sparseMap[j - 1]?.[i])
+          ) {
+            bitmask += 128;
+          }
+
+          bitmasks[i][j] = bitmask;
+          if (bitmask === 0 || !BLOB_NUMBERS.has(bitmask)) {
+            console.log("bitmask not found", bitmask);
+            continue;
+          }
+          uniqueBitmasks.add(bitmask);
+          // const index = AUTOTILE_MAPPING.indexOf(bitmask);
+          // if (index === -1) {
+          //   console.log("bitmask not found", bitmask);
+          //   console.log([
+          //     [
+          //       sparseMap[i - 1]?.[j - 1],
+          //       sparseMap[i - 1]?.[j],
+          //       sparseMap[i - 1]?.[j + 1],
+          //     ],
+          //     [
+          //       sparseMap[i]?.[j - 1],
+          //       sparseMap[i]?.[j],
+          //       sparseMap[i]?.[j + 1],
+          //     ],
+          //     [
+          //       sparseMap[i + 1]?.[j - 1],
+          //       sparseMap[i + 1]?.[j],
+          //       sparseMap[i + 1]?.[j + 1],
+          //     ],
+          //   ]);
+          // }
+          const eid = buildBaseEntity(
+            i,
+            j,
+            -1,
+            AUTOTILE_MAPPING.indexOf(bitmask),
+            // 255,
+            world,
+            "autotile"
+          );
+          // Sprite.animated[eid] = 1;
+          // animations.set(eid, {
+          //   key: "Grass" + Phaser.Math.Between(1, 4),
+          //   repeat: -1,
+          //   frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
+          // });
+
+          console.log(i, j, bitmask, AUTOTILE_MAPPING.indexOf(bitmask) - 1);
         }
       }
-      console.log(sparseMap);
+      console.table(bitmasks);
+      // console.log("uniqueBitmasks", Array.from(uniqueBitmasks));
+      // console.log("uniqueBitmasks", Array.from(uniqueBitmasks).length);
     }, 2500);
   }
 
