@@ -29,7 +29,7 @@ import Sprite from "../components/Sprite";
 import conditionalDestroySystem from "../systems/conditionalDestroySystem";
 import ConditionalDestroy from "../components/CoditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
-import { NodeType } from "../graphGenerator";
+import { GROUP_NODE_SIZES, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
 
 export default class Main extends Scene {
@@ -98,8 +98,8 @@ export default class Main extends Scene {
 
     const map = addEntity(world);
     addComponent(world, Map, map);
-    Map.width[map] = 64;
-    Map.height[map] = 64;
+    Map.width[map] = 100;
+    Map.height[map] = 100;
     const midWidth = Map.width[map] / 2;
     const midHeight = Map.height[map] / 2;
     const initialRoomSize = 8;
@@ -110,17 +110,7 @@ export default class Main extends Scene {
       this.cameras.main.setZoom(2);
     }
 
-    this.cameras.main.centerOn(
-      Map.width[map] * TILE_WIDTH * 0.5,
-      Map.height[map] * TILE_WIDTH * 0.5
-    );
-
     const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.1);
-    this.tweens.add({
-      targets: vignette,
-      radius: 0.3,
-      duration: 1000,
-    });
 
     const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
     const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 2.1);
@@ -132,32 +122,38 @@ export default class Main extends Scene {
         this.tweens.add({
           targets: colorMatrix,
           alpha: 0,
-          duration: 1000,
+          duration: 3000,
+        });
+        this.tweens.add({
+          targets: vignette,
+          radius: 0.3,
+          duration: 3000,
         });
         this.tweens.add({
           targets: bloom,
           strength: 1,
-          duration: 1000,
+          duration: 3000,
         });
         this.tweens.add({
           targets: vignette,
           radius: 1,
-          duration: 1000,
+          duration: 3000,
         });
         this.tweens.add({
           targets: barrel,
           amount: 1,
-          duration: 1000,
+          duration: 3000,
         });
         this.tweens.add({
           targets: tiltShift,
           radius: 0.1,
-          duration: 1000,
+          duration: 3000,
         });
         this.tweens.add({
           targets: this.cameras.main,
-          zoom: 2.5,
-          duration: 1500,
+          zoom: 0.35,
+          duration: 8000,
+          delay: 2000,
           ease: Phaser.Math.Easing.Quadratic.InOut,
         });
       }
@@ -360,11 +356,14 @@ export default class Main extends Scene {
     // make sure to have at least 50 points on the bottom side of the polygon
     let points = [];
     points.push(0, 0);
-    points.push(0, 10 * TILE_WIDTH);
+    points.push(0, Map.height[map] * TILE_WIDTH);
     for (let i = 0; i < 200; i++) {
-      points.push(Map.width[map] * TILE_WIDTH * (i / 200), 10 * TILE_WIDTH);
+      points.push(
+        Map.width[map] * TILE_WIDTH * (i / 200),
+        Map.height[map] * TILE_WIDTH
+      );
     }
-    points.push(Map.width[map] * TILE_WIDTH, 10 * TILE_WIDTH);
+    points.push(Map.width[map] * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
     points.push(Map.width[map] * TILE_WIDTH, 0);
 
     // this.oceanTop.alpha = 0;
@@ -393,15 +392,15 @@ export default class Main extends Scene {
     this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
     this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
     this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
-    this.oceanTop.visible = false;
+    // this.oceanTop.visible = false;
 
     setTimeout(() => {
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
       const lowestX =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).x) || [])) - 20;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).x) || [])) - 100;
       const lowestY =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).y) || [])) - 20;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).y) || [])) - 100;
 
       const movedData = {
         nodes: data?.nodes.map((n) => ({
@@ -424,76 +423,84 @@ export default class Main extends Scene {
         })),
       };
 
-      const sparseMap: number[][] = [];
-      for (let i = 0; i < 200; i++) {
-        sparseMap[i] = [];
-        for (let j = 0; j < 200; j++) {
-          sparseMap[i][j] = 0;
-        }
-      }
-
       const bounds = graph?.getGraphBbox();
       const [minX, minY, maxX, maxY] = [
         Math.floor(bounds!.x[0] - lowestX),
         Math.floor(bounds!.y[0] - lowestY),
-        Math.floor(bounds!.x[1] - lowestX),
-        Math.floor(bounds!.y[1] - lowestY),
+        Math.floor(bounds!.x[1] - lowestX) + 200,
+        Math.floor(bounds!.y[1] - lowestY) + 200,
       ];
       const width = maxX - minX;
       const height = maxY - minY;
-      const scaledWidth = Math.floor(width / 8);
-      const scaledHeight = Math.floor(height / 8);
+      const scaledWidth = Math.floor(width / 4);
+      const scaledHeight = Math.floor(height / 4);
+
+      const sparseMap: number[][] = [];
+      for (let i = 0; i < scaledHeight; i++) {
+        sparseMap[i] = [];
+        for (let j = 0; j < scaledWidth; j++) {
+          sparseMap[i][j] = 0;
+        }
+      }
       for (let i = 0; i < scaledHeight; i++) {
         sparseMap[i] ||= [];
         for (let j = 0; j < scaledWidth; j++) {
-          sparseMap[i][j] = 1;
+          // sparseMap[i][j] = 1;
         }
       }
-      // for (const n of movedData?.nodes || []) {
-      //   // buildBaseEntity(
-      //   //   Math.floor(n.x / 3),
-      //   //   Math.floor(n.y / 3),
-      //   //   2,
-      //   //   0,
-      //   //   world,
-      //   //   "autotile"
-      //   // );
-      //   const y = Math.floor(n.y / 8);
-      //   const x = Math.floor(n.x / 8);
-      //   sparseMap[y - 1][x] = 1;
-      //   sparseMap[y][x - 1] = 1;
-      //   sparseMap[y][x] = 1;
-      //   sparseMap[y][x + 1] = 1;
-      //   sparseMap[y + 1][x] = 1;
-      // }
-      // for (const l of movedData?.links || []) {
-      //   const startX = Math.floor((l.source as NodeType).x / 8);
-      //   const startY = Math.floor((l.source as NodeType).y / 8);
-      //   const endX = Math.floor((l.target as NodeType).x / 8);
-      //   const endY = Math.floor((l.target as NodeType).y / 8);
+      for (const n of movedData?.nodes || []) {
+        // buildBaseEntity(
+        //   Math.floor(n.x / 3),
+        //   Math.floor(n.y / 3),
+        //   2,
+        //   0,
+        //   world,
+        //   "autotile"
+        // );
+        const y = Math.floor(n.y / 4);
+        const x = Math.floor(n.x / 4);
+        for (
+          let radius = 0;
+          radius < GROUP_NODE_SIZES[n.group] / 1.5;
+          radius++
+        ) {
+          for (let angle = 0; angle < 360; angle += 1) {
+            const dx = Math.floor(Math.cos(angle) * radius);
+            const dy = Math.floor(Math.sin(angle) * radius);
+            sparseMap[y + dy] ||= [];
+            sparseMap[y + dy][x + dx] = 1;
+          }
+        }
+      }
+      for (const l of movedData?.links || []) {
+        const startX = Math.floor((l.source as NodeType).x / 8);
+        const startY = Math.floor((l.source as NodeType).y / 8);
+        const endX = Math.floor((l.target as NodeType).x / 8);
+        const endY = Math.floor((l.target as NodeType).y / 8);
 
-      //   // integer step from start to end
-      //   const stepX = endX - startX;
-      //   const stepY = endY - startY;
-      //   const step = Math.max(Math.abs(stepX), Math.abs(stepY));
-      //   const stepXNormalized = stepX / step;
-      //   const stepYNormalized = stepY / step;
+        // integer step from start to end
+        const stepX = endX - startX;
+        const stepY = endY - startY;
+        const step = Math.max(Math.abs(stepX), Math.abs(stepY));
+        const stepXNormalized = stepX / step;
+        const stepYNormalized = stepY / step;
 
-      //   let x = startX;
-      //   let y = startY;
-      //   for (let i = 0; i < step; i++) {
-      //     x += stepXNormalized;
-      //     y += stepYNormalized;
-      //     if (!sparseMap[Math.floor(y)]) {
-      //       console.log("sparseMap[Math.floor(y)]", Math.floor(y));
-      //     }
-      //     sparseMap[Math.floor(y) - 1][Math.floor(x)] = 1;
-      //     sparseMap[Math.floor(y)][Math.floor(x) - 1] = 1;
-      //     sparseMap[Math.floor(y)][Math.floor(x)] = 1;
-      //     sparseMap[Math.floor(y)][Math.floor(x) + 1] = 1;
-      //     sparseMap[Math.floor(y) + 1][Math.floor(x)] = 1;
-      //   }
-      // }
+        let x = startX;
+        let y = startY;
+        for (let i = 0; i < step; i++) {
+          x += stepXNormalized;
+          y += stepYNormalized;
+          if (!sparseMap[Math.floor(y)]) {
+            console.log("sparseMap[Math.floor(y)]", Math.floor(y));
+          }
+          sparseMap[Math.floor(y) - 1][Math.floor(x)] = 1;
+          sparseMap[Math.floor(y)][Math.floor(x) - 1] = 1;
+          sparseMap[Math.floor(y)][Math.floor(x)] = 1;
+          sparseMap[Math.floor(y)][Math.floor(x) + 1] = 1;
+          sparseMap[Math.floor(y) + 1][Math.floor(x)] = 1;
+        }
+      }
+
       // for (let i = 0; i < 200; i++) {
       //   const firstNonZero = sparseMap[i].indexOf(1);
       //   const lastNonZero = sparseMap[i].lastIndexOf(1);
@@ -512,8 +519,15 @@ export default class Main extends Scene {
       //     }
       //   }
       // }
+
       console.table(sparseMap);
       const bitmasks: number[][] = [];
+      for (let i = 0; i <= scaledWidth + 5; i++) {
+        bitmasks[i] = [];
+        for (let j = 0; j <= scaledHeight + 5; j++) {
+          bitmasks[i][j] = 0;
+        }
+      }
       const uniqueBitmasks = new Set<number>();
       for (let i = 0; i <= scaledWidth + 5; i++) {
         bitmasks[i] = [];
@@ -528,10 +542,7 @@ export default class Main extends Scene {
             bitmask += 1;
           }
           // northeast
-          if (
-            sparseMap[j - 1]?.[i + 1] &&
-            (sparseMap[j - j]?.[i] || sparseMap[j]?.[i + 1])
-          ) {
+          if (sparseMap[j - 1]?.[i + 1]) {
             bitmask += 2;
           }
           // east
@@ -539,10 +550,7 @@ export default class Main extends Scene {
             bitmask += 4;
           }
           // southeast
-          if (
-            sparseMap[j + 1]?.[i + 1] &&
-            (sparseMap[j + 1]?.[i] || sparseMap[j]?.[i + 1])
-          ) {
+          if (sparseMap[j + 1]?.[i + 1]) {
             bitmask += 8;
           }
           // south
@@ -550,10 +558,7 @@ export default class Main extends Scene {
             bitmask += 16;
           }
           // southwest
-          if (
-            sparseMap[j + 1]?.[i - 1] &&
-            (sparseMap[j + 1]?.[i] || sparseMap[j]?.[i - 1])
-          ) {
+          if (sparseMap[j + 1]?.[i - 1]) {
             bitmask += 32;
           }
           // west
@@ -561,49 +566,16 @@ export default class Main extends Scene {
             bitmask += 64;
           }
           // northwest
-          if (
-            sparseMap[j - 1]?.[i - 1] &&
-            (sparseMap[j]?.[i - 1] || sparseMap[j - 1]?.[i])
-          ) {
+          if (sparseMap[j - 1]?.[i - 1]) {
             bitmask += 128;
           }
 
-          bitmasks[i][j] = bitmask;
-          if (bitmask === 0 || !BLOB_NUMBERS.has(bitmask)) {
-            console.log("bitmask not found", bitmask);
-            continue;
+          if (!BLOB_NUMBERS.has(bitmask)) {
+            bitmask = 0;
           }
+          bitmasks[i][j] = bitmask;
           uniqueBitmasks.add(bitmask);
-          // const index = AUTOTILE_MAPPING.indexOf(bitmask);
-          // if (index === -1) {
-          //   console.log("bitmask not found", bitmask);
-          //   console.log([
-          //     [
-          //       sparseMap[i - 1]?.[j - 1],
-          //       sparseMap[i - 1]?.[j],
-          //       sparseMap[i - 1]?.[j + 1],
-          //     ],
-          //     [
-          //       sparseMap[i]?.[j - 1],
-          //       sparseMap[i]?.[j],
-          //       sparseMap[i]?.[j + 1],
-          //     ],
-          //     [
-          //       sparseMap[i + 1]?.[j - 1],
-          //       sparseMap[i + 1]?.[j],
-          //       sparseMap[i + 1]?.[j + 1],
-          //     ],
-          //   ]);
-          // }
-          const eid = buildBaseEntity(
-            i,
-            j,
-            -1,
-            AUTOTILE_MAPPING.indexOf(bitmask),
-            // 255,
-            world,
-            "autotile"
-          );
+
           // Sprite.animated[eid] = 1;
           // animations.set(eid, {
           //   key: "Grass" + Phaser.Math.Between(1, 4),
@@ -614,6 +586,38 @@ export default class Main extends Scene {
           console.log(i, j, bitmask, AUTOTILE_MAPPING.indexOf(bitmask) - 1);
         }
       }
+
+      for (let i = 0; i < scaledWidth; i++) {
+        for (let j = 0; j < scaledHeight; j++) {
+          let bitmask = bitmasks[i][j];
+          // if 1 neighbor or less, drop the tile
+          if (
+            [
+              bitmasks[i - 1]?.[j],
+              bitmasks[i + 1]?.[j],
+              bitmasks[i]?.[j - 1],
+              bitmasks[i]?.[j + 1],
+              bitmasks[i - 1]?.[j - 1],
+              bitmasks[i + 1]?.[j + 1],
+              bitmasks[i - 1]?.[j + 1],
+              bitmasks[i + 1]?.[j - 1],
+            ].filter((b) => b !== 0).length <= 3
+          ) {
+            bitmask = 0;
+          }
+          const index = AUTOTILE_MAPPING.indexOf(bitmask);
+          const eid = buildBaseEntity(
+            i,
+            j,
+            -1,
+            index,
+            // 255,
+            world,
+            "autotile"
+          );
+        }
+      }
+
       console.table(bitmasks);
       // console.log("uniqueBitmasks", Array.from(uniqueBitmasks));
       // console.log("uniqueBitmasks", Array.from(uniqueBitmasks).length);
@@ -655,9 +659,9 @@ export default class Main extends Scene {
       const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
       const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
       this.cameras.main.scrollX +=
-        (destinationX - this.cameras.main.scrollX) * 0.00001 * delta;
+        (destinationX - this.cameras.main.scrollX) * 0.005 * delta;
       this.cameras.main.scrollY +=
-        (destinationY - this.cameras.main.scrollY) * 0.00001 * delta;
+        (destinationY - this.cameras.main.scrollY) * 0.005 * delta;
       if (
         Math.abs(destinationX - this.cameras.main.scrollX) < delta &&
         Math.abs(destinationY - this.cameras.main.scrollY) < delta

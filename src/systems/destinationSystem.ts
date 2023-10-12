@@ -20,8 +20,7 @@ const destinationSystem = (world: World) => {
     const dx = Destination.x[eid] - Position.x[eid];
     const dy = Destination.y[eid] - Position.y[eid];
     const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist < 0.1) {
+    if (dist < delta * SPEED) {
       Position.x[eid] = Destination.x[eid];
       Position.y[eid] = Destination.y[eid];
       Velocity.x[eid] = 0;
