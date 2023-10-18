@@ -9,6 +9,9 @@ const game = new Game({
   type: AUTO,
   scene: Main,
   pixelArt: true,
+  scale: {
+    mode: Phaser.Scale.FIT,
+  },
   fps: {
     min: 5,
     target: 60,
