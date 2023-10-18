@@ -13,6 +13,7 @@ import useStore from "./useStore";
 
 const graphElement = document.createElement("div");
 graphElement.id = "graph";
+graphElement.style.display = "none";
 document.body.appendChild(graphElement);
 
 const data = graphGenerator();
@@ -53,4 +54,4 @@ graph.d3Force("link")?.distance((link: LinkType) => {
 
 useStore.setState({ forceGraphInstance: graph });
 
-render(<UI />, document.getElementById("root"));
+// render(<UI />, document.getElementById("root"));

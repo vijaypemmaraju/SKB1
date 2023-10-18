@@ -3,8 +3,8 @@ import Main from "./scenes/Main";
 
 const width = Math.min(512, window.innerWidth);
 const game = new Game({
-  width,
-  height: Math.min(512, width),
+  width: window.innerWidth,
+  height: window.innerHeight,
   antialias: false,
   type: AUTO,
   scene: Main,
