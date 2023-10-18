@@ -7,7 +7,7 @@ export type NodeType = NodeObject & {
   description?: string;
 };
 
-export const GROUP_NODE_SIZES = {
+export const GROUP_NODE_SIZES: { [key in NodeType["group"]]: number } = {
   ROOT: 20,
   PUZZLE: 10,
   CLUE: 3,

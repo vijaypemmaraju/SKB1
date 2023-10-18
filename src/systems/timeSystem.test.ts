@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import timeSystem from "./timeSystem";
+import World from "../World";
 
 vi.mock("../game", () => ({
   default: {
@@ -18,7 +19,7 @@ describe("timeSystem", () => {
         elapsed: 0,
         then: 0,
       },
-    };
+    } as World;
     const updatedWorld = timeSystem(world);
     expect(updatedWorld.time.delta).toBe(1);
     expect(updatedWorld.time.elapsed).toBe(1);

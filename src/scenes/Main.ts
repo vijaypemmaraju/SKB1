@@ -201,7 +201,7 @@ export default class Main extends Scene {
       }
     });
 
-    useStore.setState({ hasWon: false });
+    useStore.setState({ hasWon: true });
 
     for (
       let i = midWidth - initialRoomSize / 2;
@@ -310,27 +310,27 @@ export default class Main extends Scene {
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
       const lowestX =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).x) || [])) - 100;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).x!) || [])) - 100;
       const lowestY =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).y) || [])) - 100;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).y!) || [])) - 100;
 
       const movedData = {
         nodes: data?.nodes.map((n) => ({
           ...n,
-          x: (n as NodeType).x - lowestX,
-          y: (n as NodeType).y - lowestY,
+          x: (n as NodeType).x! - lowestX,
+          y: (n as NodeType).y! - lowestY,
         })),
         links: data?.links.map((l) => ({
           ...l,
           source: {
-            ...l.source,
-            x: (l.source as NodeType).x - lowestX,
-            y: (l.source as NodeType).y - lowestY,
+            ...(l.source as NodeType),
+            x: (l.source as NodeType).x! - lowestX,
+            y: (l.source as NodeType).y! - lowestY,
           },
           target: {
-            ...l.target,
-            x: (l.target as NodeType).x - lowestX,
-            y: (l.target as NodeType).y - lowestY,
+            ...(l.target as NodeType),
+            x: (l.target as NodeType).x! - lowestX,
+            y: (l.target as NodeType).y! - lowestY,
           },
         })),
       };
@@ -373,7 +373,7 @@ export default class Main extends Scene {
         const x = Math.floor(n.x / 4);
         for (
           let radius = 0;
-          radius < GROUP_NODE_SIZES[n.group] / 1.5;
+          radius < GROUP_NODE_SIZES[(n as NodeType).group] / 1.5;
           radius++
         ) {
           for (let angle = 0; angle < 360; angle += 1) {
@@ -385,10 +385,10 @@ export default class Main extends Scene {
         }
       }
       for (const l of movedData?.links || []) {
-        const startX = Math.floor((l.source as NodeType).x / 8);
-        const startY = Math.floor((l.source as NodeType).y / 8);
-        const endX = Math.floor((l.target as NodeType).x / 8);
-        const endY = Math.floor((l.target as NodeType).y / 8);
+        const startX = Math.floor((l.source as NodeType).x! / 8);
+        const startY = Math.floor((l.source as NodeType).y! / 8);
+        const endX = Math.floor((l.target as NodeType).x! / 8);
+        const endY = Math.floor((l.target as NodeType).y! / 8);
 
         // integer step from start to end
         const stepX = endX - startX;
