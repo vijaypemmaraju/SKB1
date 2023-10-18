@@ -23,6 +23,7 @@ export const TILE_HEIGHT = 16;
 
 const spriteRenderingSystem = (world: World) => {
   const ents = spriteQuery(world);
+  world.renderTexture.beginDraw();
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     const sprite = sprites.get(eid);
@@ -33,6 +34,7 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
+      // world.renderTexture.draw(sprite);
       const text = sprite.text;
       if (text) {
         text.x = sprite.x;
@@ -55,6 +57,7 @@ const spriteRenderingSystem = (world: World) => {
       }
     }
   }
+  world.renderTexture.endDraw();
   return world;
 };
 

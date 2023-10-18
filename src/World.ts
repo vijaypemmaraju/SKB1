@@ -1,3 +1,4 @@
+import Phaser from "phaser";
 import { IWorld } from "bitecs";
 
 type World = IWorld & {
@@ -6,6 +7,8 @@ type World = IWorld & {
     elapsed: number;
     then: number;
   };
+  renderTexture: Phaser.GameObjects.RenderTexture;
+  map: number[][]
 };
 
 export default World;

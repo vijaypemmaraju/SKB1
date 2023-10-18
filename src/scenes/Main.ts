@@ -37,8 +37,6 @@ export default class Main extends Scene {
   pipeline!: (world: World) => void;
   player!: number;
   isFollowing!: boolean;
-  oceanTop!: Phaser.GameObjects.Polygon;
-  oceanLeft: Phaser.GameObjects.Polygon;
 
   constructor() {
     super({ key: "Main" });
@@ -69,20 +67,31 @@ export default class Main extends Scene {
     this.load.atlas("sheet", "sheet.png", "sheet.json");
     this.load.aseprite("bunny", "bunny.png", "bunny.json");
     this.load.aseprite("grass", "grass.png", "grass.json");
-    this.load.aseprite("autotile", "islands-sheet.png", "islands.json");
+    this.load.atlas("autotile", "islands-sheet.png", "islands.json");
+    this.load.spritesheet("autotile-sheet", "islands-sheet.png", {
+      frameWidth: 16,
+      frameHeight: 16,
+      margin: 1,
+      spacing: 1,
+    });
+    this.load.glsl("water", "shaders/water.frag");
   }
 
   create() {
-    const graphics = this.add.graphics();
-
     this.anims.createFromAseprite("bunny");
     this.anims.createFromAseprite("grass");
+    const rt1 = this.add.renderTexture(
+      0,
+      0,
+      this.cameras.main.width,
+      this.cameras.main.height
+    );
 
-    graphics.lineStyle(4, 0x00ff00, 1);
-    graphics.beginPath();
-    graphics.moveTo(0, 0);
-    graphics.closePath();
-    graphics.strokePath();
+    this.world.renderTexture = rt1;
+
+    const shader = this.add.shader("water", 0, 0, 4096, 4096);
+    shader.depth = -2;
+
     const swipe = (this as any).rexGestures.add.swipe({
       enable: true,
       bounds: undefined,
@@ -110,12 +119,40 @@ export default class Main extends Scene {
       this.cameras.main.setZoom(2);
     }
 
-    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.1);
+    const vignette = this.cameras.main.postFX.addVignette(0.5, 0.5, 0.01, 0.4);
+
+    this.tweens.add({
+      targets: vignette,
+      radius: 0.5,
+      duration: 3000,
+    });
 
     const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
-    const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 0.9, 2.1);
+    // const saturation = this.cameras.main.postFX.addColorMatrix().saturate();
+    // saturation.alpha = 0;
+    const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1.1, 1.5);
+
+    this.tweens.add({
+      targets: bloom,
+      strength: 0.8,
+      duration: 3000,
+    });
+
     const barrel = this.cameras.main.postFX.addBarrel(2.6);
-    const tiltShift = this.cameras.main.postFX.addTiltShift(9.5);
+
+    this.tweens.add({
+      targets: barrel,
+      amount: 1.1,
+      duration: 3000,
+    });
+
+    const tiltShift = this.cameras.main.postFX.addTiltShift(7.5);
+
+    this.tweens.add({
+      targets: tiltShift,
+      radius: 0.8,
+      duration: 3000,
+    });
 
     useStore.subscribe(() => {
       if (useStore.getState().hasWon) {
@@ -124,6 +161,11 @@ export default class Main extends Scene {
           alpha: 0,
           duration: 3000,
         });
+        // this.tweens.add({
+        //   targets: saturation,
+        //   alpha: 0.5,
+        //   duration: 3000,
+        // });
         this.tweens.add({
           targets: vignette,
           radius: 0.3,
@@ -131,17 +173,17 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: bloom,
-          strength: 1,
+          strength: 1.2,
           duration: 3000,
         });
         this.tweens.add({
           targets: vignette,
-          radius: 1,
+          radius: 1.2,
           duration: 3000,
         });
         this.tweens.add({
           targets: barrel,
-          amount: 1,
+          amount: 1.01,
           duration: 3000,
         });
         this.tweens.add({
@@ -151,15 +193,15 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: this.cameras.main,
-          zoom: 0.35,
-          duration: 8000,
+          zoom: 2.5,
+          duration: 2000,
           delay: 2000,
           ease: Phaser.Math.Easing.Quadratic.InOut,
         });
       }
     });
 
-    useStore.setState({ hasWon: true });
+    useStore.setState({ hasWon: false });
 
     for (
       let i = midWidth - initialRoomSize / 2;
@@ -189,66 +231,6 @@ export default class Main extends Scene {
       }
     }
 
-    // choose 3 random non-adjacent positions
-    const positions: { x: number; y: number }[] = [];
-    while (positions.length < 3) {
-      const x = Phaser.Math.Between(
-        midWidth - initialRoomSize / 2 + 2,
-        midWidth + initialRoomSize / 2 - 2
-      );
-      const y = Phaser.Math.Between(
-        midHeight - initialRoomSize / 2 + 2,
-        midHeight + initialRoomSize / 2 - 2
-      );
-      if (
-        positions.filter(
-          (p) =>
-            Phaser.Math.Distance.Between(p.x, p.y, x, y) < 2 || grid[x][y] === 1
-        ).length === 0
-      ) {
-        positions.push({ x, y });
-        grid[x][y] = 1;
-      }
-    }
-
-    // create a goal for each position
-    positions.forEach((p) => {
-      buildGoalEntity(p.x, p.y, 0, world);
-    });
-
-    // create a pushable block for each position
-    const blocks = positions.map((p) =>
-      buildPushableBlockEntity(p.x, p.y, 0, world)
-    );
-
-    // push the blocks to the right
-    blocks.forEach((b) => {
-      const pathLength = Phaser.Math.Between(5, 7);
-      for (let i = 0; i < pathLength; i++) {
-        Position.x[b] += Phaser.Math.Between(-1, 1);
-        Position.y[b] += Phaser.Math.Between(-1, 1);
-
-        // clamp the position to the map
-        if (Position.x[b] < midWidth - initialRoomSize / 2 + 2) {
-          Position.x[b] = midWidth - initialRoomSize / 2 + 2;
-        }
-        if (Position.x[b] > midWidth + initialRoomSize / 2 - 2) {
-          Position.x[b] = midWidth + initialRoomSize / 2 - 2;
-        }
-        if (Position.y[b] < midHeight - initialRoomSize / 2 + 2) {
-          Position.y[b] = midHeight - initialRoomSize / 2 + 2;
-        }
-        if (Position.y[b] > midHeight + initialRoomSize / 2 - 2) {
-          Position.y[b] = midHeight + initialRoomSize / 2 - 2;
-        }
-
-        Destination.x[b] = Position.x[b];
-        Destination.y[b] = Position.y[b];
-      }
-      // Position.x[b] += 1;
-      // Destination.x[b] += 1;
-    });
-
     // for (let i = 0; i <= Map.width[map] - 1; i++) {
     //   for (let j = 0; j <= Map.height[map] - 1; j++) {
     //     const isGrass = j >= midHeight - initialRoomSize / 2 - 1;
@@ -265,32 +247,6 @@ export default class Main extends Scene {
     //     }
     //   }
     // }
-
-    const predicate = () => useStore.getState().hasWon;
-    for (
-      let i = midWidth - initialRoomSize / 2 - 1;
-      i <= midWidth + initialRoomSize / 2;
-      i++
-    ) {
-      for (
-        let j = midHeight - initialRoomSize / 2 - 1;
-        j <= midHeight + initialRoomSize / 2;
-        j++
-      ) {
-        if (
-          i === midWidth - initialRoomSize / 2 - 1 ||
-          i === midWidth + initialRoomSize / 2 ||
-          j === midHeight - initialRoomSize / 2 - 1 ||
-          j === midHeight + initialRoomSize / 2
-        ) {
-          const eid = buildStaticBlockEntity(i, j, 0, world);
-          addComponent(world, ConditionalDestroy, eid);
-          const predicates = conditionalDestroys.get(eid) || [];
-          predicates.push(predicate);
-          conditionalDestroys.set(eid, predicates);
-        }
-      }
-    }
 
     // buildIcyTileEntity(2, 2, 1, world);
     // buildIcyTileEntity(2, 3, 1, world);
@@ -349,52 +305,8 @@ export default class Main extends Scene {
     // buildGoalEntity(7, 9, 0, world);
     // buildGoalEntity(7, 5, 0, world);
 
-    this.player = buildPlayerEntity(midWidth, midHeight, 3, world);
-
-    // build ocean
-    // create a polygon that is the width of the map and 10 tiles high
-    // make sure to have at least 50 points on the bottom side of the polygon
-    let points = [];
-    points.push(0, 0);
-    points.push(0, Map.height[map] * TILE_WIDTH);
-    for (let i = 0; i < 200; i++) {
-      points.push(
-        Map.width[map] * TILE_WIDTH * (i / 200),
-        Map.height[map] * TILE_WIDTH
-      );
-    }
-    points.push(Map.width[map] * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
-    points.push(Map.width[map] * TILE_WIDTH, 0);
-
-    // this.oceanTop.alpha = 0;
-    // this.oceanTop.blendMode = Phaser.BlendModes.SCREEN;
-    // points.push(0, 0);
-    // for (let j = 0; j < 200; j++) {
-    //   points.push(
-    //     Map.width[map] * TILE_WIDTH,
-    //     10 * TILE_WIDTH + Map.height[map] * TILE_WIDTH * (j / 200)
-    //   );
-    // }
-    // points.push(Map.width[map] * TILE_WIDTH, Map.height[map] * TILE_WIDTH);
-    // points.push(Map.width[map] * TILE_WIDTH, 0);
-    // points.push(
-    //   (Map.width[map] + 1) * TILE_WIDTH,
-    //   Map.height[map] * TILE_WIDTH
-    // );
-
-    this.oceanTop = this.add.polygon(
-      (Map.width[map] * TILE_WIDTH) / 2,
-      0,
-      points,
-      0x0000ff
-    );
-    this.oceanTop.postFX.addBloom(0xffffff, 1, 1, 0.9, 1.1);
-    this.oceanTop.postFX.addBlur(2, 0, 1, 0.25, 0xffffff);
-    this.oceanTop.postFX.addGradient(0x176b87, 0x04364a);
-    this.oceanTop.postFX.addGlow(0xffffff, 2.5, 0, false, 2, 5);
-    // this.oceanTop.visible = false;
-
     setTimeout(() => {
+      const tileData: number[][] = [];
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
       const lowestX =
@@ -491,7 +403,6 @@ export default class Main extends Scene {
           x += stepXNormalized;
           y += stepYNormalized;
           if (!sparseMap[Math.floor(y)]) {
-            console.log("sparseMap[Math.floor(y)]", Math.floor(y));
           }
           sparseMap[Math.floor(y) - 1][Math.floor(x)] = 1;
           sparseMap[Math.floor(y)][Math.floor(x) - 1] = 1;
@@ -520,7 +431,7 @@ export default class Main extends Scene {
       //   }
       // }
 
-      console.table(sparseMap);
+      // console.table(sparseMap);
       const bitmasks: number[][] = [];
       for (let i = 0; i <= scaledWidth + 5; i++) {
         bitmasks[i] = [];
@@ -571,6 +482,7 @@ export default class Main extends Scene {
           }
 
           if (!BLOB_NUMBERS.has(bitmask)) {
+            // sparseMap[j][i] = 0;
             bitmask = 0;
           }
           bitmasks[i][j] = bitmask;
@@ -582,8 +494,6 @@ export default class Main extends Scene {
           //   repeat: -1,
           //   frameRate: 1 + Phaser.Math.FloatBetween(-0.1, 0.1),
           // });
-
-          console.log(i, j, bitmask, AUTOTILE_MAPPING.indexOf(bitmask) - 1);
         }
       }
 
@@ -603,7 +513,9 @@ export default class Main extends Scene {
               bitmasks[i + 1]?.[j - 1],
             ].filter((b) => b !== 0).length <= 3
           ) {
+            sparseMap[j][i] = 0;
             bitmask = 0;
+            continue;
           }
           const index = AUTOTILE_MAPPING.indexOf(bitmask);
           const eid = buildBaseEntity(
@@ -611,16 +523,104 @@ export default class Main extends Scene {
             j,
             -1,
             index,
-            // 255,
+            // bitmask > 0 ? AUTOTILE_MAPPING.indexOf(255) : 0,
             world,
             "autotile"
           );
+          tileData[j] ||= [];
+          tileData[j][i] = bitmask > 0 ? 1 : 0;
         }
       }
 
-      console.table(bitmasks);
-      // console.log("uniqueBitmasks", Array.from(uniqueBitmasks));
-      // console.log("uniqueBitmasks", Array.from(uniqueBitmasks).length);
+      world.map = tileData;
+
+      // finds a random non-zero position in sparseMap
+      const randomPositionOnMap = () => {
+        let x = Phaser.Math.Between(0, scaledWidth - 1);
+        let y = Phaser.Math.Between(0, scaledHeight - 1);
+
+        while (!tileData[y]?.[x]) {
+          x = Phaser.Math.Between(0, scaledWidth - 1);
+          y = Phaser.Math.Between(0, scaledHeight - 1);
+        }
+        return { x, y };
+      };
+
+      const { x: startX, y: startY } = randomPositionOnMap();
+      this.player = buildPlayerEntity(startX, startY, 3, world);
+
+      // choose 3 random non-adjacent positions
+      const positions: { x: number; y: number }[] = [];
+      while (positions.length < 3) {
+        let x = Phaser.Math.Between(
+          midWidth - initialRoomSize / 2 + 2,
+          midWidth + initialRoomSize / 2 - 2
+        );
+        let y = Phaser.Math.Between(
+          midHeight - initialRoomSize / 2 + 2,
+          midHeight + initialRoomSize / 2 - 2
+        );
+
+        while (!tileData[x][y]) {
+          x = Phaser.Math.Between(
+            midWidth - initialRoomSize / 2 + 2,
+            midWidth + initialRoomSize / 2 - 2
+          );
+          y = Phaser.Math.Between(
+            midHeight - initialRoomSize / 2 + 2,
+            midHeight + initialRoomSize / 2 - 2
+          );
+        }
+
+        if (
+          positions.filter(
+            (p) =>
+              Phaser.Math.Distance.Between(p.x, p.y, x, y) < 2 ||
+              grid[x][y] === 1
+          ).length === 0
+        ) {
+          positions.push({ x, y });
+          grid[x][y] = 1;
+        }
+      }
+
+      // create a goal for each position
+      positions.forEach((p) => {
+        buildGoalEntity(p.x, p.y, 0, world);
+      });
+
+      // create a pushable block for each position
+      const blocks = positions.map((p) =>
+        buildPushableBlockEntity(p.x, p.y, 0, world)
+      );
+
+      // push the blocks to the right
+      blocks.forEach((b) => {
+        const pathLength = Phaser.Math.Between(5, 7);
+        for (let i = 0; i < pathLength; i++) {
+          Position.x[b] += Phaser.Math.Between(-1, 1);
+          Position.y[b] += Phaser.Math.Between(-1, 1);
+
+          // clamp the position to the map
+          if (Position.x[b] < midWidth - initialRoomSize / 2 + 2) {
+            Position.x[b] = midWidth - initialRoomSize / 2 + 2;
+          }
+          if (Position.x[b] > midWidth + initialRoomSize / 2 - 2) {
+            Position.x[b] = midWidth + initialRoomSize / 2 - 2;
+          }
+          if (Position.y[b] < midHeight - initialRoomSize / 2 + 2) {
+            Position.y[b] = midHeight - initialRoomSize / 2 + 2;
+          }
+          if (Position.y[b] > midHeight + initialRoomSize / 2 - 2) {
+            Position.y[b] = midHeight + initialRoomSize / 2 - 2;
+          }
+
+          Destination.x[b] = Position.x[b];
+          Destination.y[b] = Position.y[b];
+        }
+        // Position.x[b] += 1;
+        // Destination.x[b] += 1;
+      });
     }, 2500);
   }
 
@@ -628,34 +628,12 @@ export default class Main extends Scene {
     // Update game objects here
     this.pipeline(this.world);
 
-    const oceanTopPoints = this.oceanTop.geom.points;
-
-    for (let i = 2; i < 202; i++) {
-      oceanTopPoints[i].y =
-        10 * TILE_WIDTH +
-        Math.cos(time * 0.0002 + i * 100) *
-          2 *
-          Math.sin(time * 0.001 + i * 25) +
-        Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
-    }
-
-    // for (let i = 204; i < 404; i++) {
-    //   oceanTopPoints[i].x =
-    //     10 * TILE_WIDTH +
-    //     Math.cos(time * 0.0002 + i * 100) *
-    //       2 *
-    //       Math.sin(time * 0.001 + i * 25) +
-    //     Math.cos(time * 0.001 + i * 100) * Math.cos(time * 0.002 + i * 1);
-    // }
-
-    this.oceanTop.setTo(oceanTopPoints);
-
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
     }
 
     const playerSprite = sprites.get(this.player);
-    if (useStore.getState().hasWon && playerSprite && !this.isFollowing) {
+    if (playerSprite && !this.isFollowing) {
       const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
       const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
       this.cameras.main.scrollX +=

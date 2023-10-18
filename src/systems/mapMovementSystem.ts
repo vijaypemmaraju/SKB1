@@ -23,27 +23,45 @@ const mapMovementSystem = (world: World) => {
   const collidables = collidableQuery(world);
   const pushables = pushableQuery(world);
   const icies = icyQuery(world);
+  const worldMap = world.map;
   for (let i = 0; i < inputs.length; i++) {
     const eid = inputs[i];
+    console.log(worldMap[Position.y[eid]]?.[Position.x[eid]]);
     let input = Input.direction[eid];
     let lastInput = Input.lastDirection[eid];
 
     let isInput = false;
 
     // if input was just pressed
-    if (input & Direction.Up && !(lastInput & Direction.Up)) {
+    if (
+      input & Direction.Up &&
+      !(lastInput & Direction.Up) &&
+      worldMap[Destination.y[eid] - 1]?.[Destination.x[eid]] === 1
+    ) {
       Destination.y[eid] -= 1;
       isInput = true;
     }
-    if (input & Direction.Down && !(lastInput & Direction.Down)) {
+    if (
+      input & Direction.Down &&
+      !(lastInput & Direction.Down) &&
+      worldMap[Destination.y[eid] + 1]?.[Destination.x[eid]] === 1
+    ) {
       Destination.y[eid] += 1;
       isInput = true;
     }
-    if (input & Direction.Left && !(lastInput & Direction.Left)) {
+    if (
+      input & Direction.Left &&
+      !(lastInput & Direction.Left) &&
+      worldMap[Destination.y[eid]]?.[Destination.x[eid] - 1] === 1
+    ) {
       Destination.x[eid] -= 1;
       isInput = true;
     }
-    if (input & Direction.Right && !(lastInput & Direction.Right)) {
+    if (
+      input & Direction.Right &&
+      !(lastInput & Direction.Right) &&
+      worldMap[Destination.y[eid]]?.[Destination.x[eid] + 1] === 1
+    ) {
       Destination.x[eid] += 1;
       isInput = true;
     }
@@ -102,7 +120,7 @@ const mapMovementSystem = (world: World) => {
         while (isIcy) {
           isIcy = resolveIcy(pid, icies, collidables);
         }
-        resolveMapBoundaries(pid, map);
+        resolveMapBoundaries(pid, world.map);
 
         if (
           Position.x[pid] !== Destination.x[pid] ||
@@ -124,7 +142,7 @@ const mapMovementSystem = (world: World) => {
         break;
       }
     }
-    resolveMapBoundaries(eid, map);
+    resolveMapBoundaries(eid, world.map);
 
     let isCollision = true;
     while (isCollision) {
@@ -137,18 +155,11 @@ const mapMovementSystem = (world: World) => {
   return world;
 };
 
-const resolveMapBoundaries = (eid: number, map: number) => {
-  if (Destination.x[eid] < 0) {
-    Destination.x[eid] = 0;
-  }
-  if (Destination.x[eid] > Map.width[map] - 1) {
-    Destination.x[eid] = Map.width[map] - 1;
-  }
-  if (Destination.y[eid] < 0) {
-    Destination.y[eid] = 0;
-  }
-  if (Destination.y[eid] > Map.height[map] - 1) {
-    Destination.y[eid] = Map.height[map] - 1;
+const resolveMapBoundaries = (eid: number, map: number[][]) => {
+  console.log(map[Destination.y[eid]]?.[Destination.x[eid]]);
+  if (map[Destination.y[eid]]?.[Destination.x[eid]] !== 1) {
+    Destination.x[eid] = Position.x[eid];
+    Destination.y[eid] = Position.y[eid];
   }
 };
 

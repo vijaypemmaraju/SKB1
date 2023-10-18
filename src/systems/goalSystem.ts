@@ -12,8 +12,13 @@ const pushableQuery = defineQuery([Position, Pushable]);
 const goalSystem = (world: World) => {
   const goals = goalQuery(world);
   const pushables = pushableQuery(world);
+  if (goals.length === 0) {
+    return world;
+  }
   if (pushables.length === 0) {
     useStore.setState({ hasWon: true });
+  } else {
+    useStore.setState({ hasWon: false });
   }
   for (let i = 0; i < pushables.length; i++) {
     const pid = pushables[i];
