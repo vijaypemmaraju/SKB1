@@ -114,7 +114,7 @@ float waterlayer(vec2 uv)
 // Procedural texture generation for the water
 vec3 water(vec2 uv, vec3 cdir)
 {
-    uv *= vec2(0.75);
+    uv *= vec2(0.5);
 
     // Parallax height distortion with two directional waves at
     // slightly different angles.

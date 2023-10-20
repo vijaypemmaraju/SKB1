@@ -13,7 +13,7 @@ import useStore from "./useStore";
 
 const graphElement = document.createElement("div");
 graphElement.id = "graph";
-graphElement.style.display = "none";
+// graphElement.style.display = "none";
 document.body.appendChild(graphElement);
 
 const data = graphGenerator();

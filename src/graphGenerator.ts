@@ -8,12 +8,12 @@ export type NodeType = NodeObject & {
 };
 
 export const GROUP_NODE_SIZES: { [key in NodeType["group"]]: number } = {
-  ROOT: 20,
-  PUZZLE: 10,
-  CLUE: 3,
-  LOCK: 8,
+  ROOT: 10,
+  PUZZLE: 8,
+  CLUE: 4,
+  LOCK: 4,
   KEY: 4,
-  ROOM: 20,
+  ROOM: 10,
 };
 
 // pretty pastel colors
@@ -80,7 +80,7 @@ const graphGenerator = () => {
     const j = Math.floor(Math.random() * (i + 1));
     [roomNames[i], roomNames[j]] = [roomNames[j], roomNames[i]];
   }
-  roomNames = roomNames.slice(0, 3);
+  roomNames = roomNames.slice(0, 5);
 
   const puzzles = [];
 
@@ -202,31 +202,31 @@ const graphGenerator = () => {
 
   // find any orphan rooms and connect them to another room
 
-  // const orphanRooms = nodes.filter(
-  //   (node) =>
-  //     node.group === "ROOM" &&
-  //     !links.some((link) => link.source === node.id || link.target === node.id)
-  // );
+  const orphanRooms = nodes.filter(
+    (node) =>
+      node.group === "ROOM" &&
+      !links.some((link) => link.source === node.id || link.target === node.id)
+  );
 
-  // for (const orphanRoom of orphanRooms) {
-  //   const otherRooms = nodes.filter(
-  //     (node) =>
-  //       node.group === "ROOM" &&
-  //       !links.some(
-  //         (link) => link.source === node.id || link.target === node.id
-  //       ) &&
-  //       node.id !== orphanRoom.id
-  //   );
+  for (const orphanRoom of orphanRooms) {
+    const otherRooms = nodes.filter(
+      (node) =>
+        node.group === "ROOM" &&
+        !links.some(
+          (link) => link.source === node.id || link.target === node.id
+        ) &&
+        node.id !== orphanRoom.id
+    );
 
-  //   if (otherRooms.length > 0) {
-  //     const otherRoom = otherRooms[0];
-  //     links.push({
-  //       source: orphanRoom.id,
-  //       target: otherRoom.id,
-  //       group: "LEADS_TO",
-  //     });
-  //   }
-  // }
+    if (otherRooms.length > 0) {
+      const otherRoom = otherRooms[0];
+      links.push({
+        source: orphanRoom.id,
+        target: otherRoom.id,
+        group: "LEADS_TO",
+      });
+    }
+  }
 
   return { nodes, links };
 };

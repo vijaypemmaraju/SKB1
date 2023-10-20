@@ -26,7 +26,6 @@ const mapMovementSystem = (world: World) => {
   const worldMap = world.map;
   for (let i = 0; i < inputs.length; i++) {
     const eid = inputs[i];
-    console.log(worldMap[Position.y[eid]]?.[Position.x[eid]]);
     let input = Input.direction[eid];
     let lastInput = Input.lastDirection[eid];
 

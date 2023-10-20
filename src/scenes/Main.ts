@@ -75,6 +75,7 @@ export default class Main extends Scene {
       spacing: 1,
     });
     this.load.glsl("water", "shaders/water.frag");
+    this.load.audio("music", "music.mp3");
   }
 
   create() {
@@ -89,7 +90,7 @@ export default class Main extends Scene {
 
     this.world.renderTexture = rt1;
 
-    const shader = this.add.shader("water", 0, 0, 4096, 4096);
+    const shader = this.add.shader("water", 1024, 1024, 8192, 8192);
     shader.depth = -2;
 
     const swipe = (this as any).rexGestures.add.swipe({
@@ -305,47 +306,49 @@ export default class Main extends Scene {
     // buildGoalEntity(7, 9, 0, world);
     // buildGoalEntity(7, 5, 0, world);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const tileData: number[][] = [];
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
       const lowestX =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).x!) || [])) - 100;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).x!) || [])) - 200;
       const lowestY =
-        Math.min(...(data?.nodes.map((n) => (n as NodeType).y!) || [])) - 100;
+        Math.min(...(data?.nodes.map((n) => (n as NodeType).y!) || [])) - 200;
 
       const movedData = {
         nodes: data?.nodes.map((n) => ({
           ...n,
-          x: (n as NodeType).x! - lowestX,
-          y: (n as NodeType).y! - lowestY,
+          x: ((n as NodeType).x! - lowestX) / 4,
+          y: ((n as NodeType).y! - lowestY) / 4,
         })),
         links: data?.links.map((l) => ({
           ...l,
           source: {
             ...(l.source as NodeType),
-            x: (l.source as NodeType).x! - lowestX,
-            y: (l.source as NodeType).y! - lowestY,
+            x: ((l.source as NodeType).x! - lowestX) / 4,
+            y: ((l.source as NodeType).y! - lowestY) / 4,
           },
           target: {
             ...(l.target as NodeType),
-            x: (l.target as NodeType).x! - lowestX,
-            y: (l.target as NodeType).y! - lowestY,
+            x: ((l.target as NodeType).x! - lowestX) / 4,
+            y: ((l.target as NodeType).y! - lowestY) / 4,
           },
         })),
       };
+
+      console.log(movedData?.links);
 
       const bounds = graph?.getGraphBbox();
       const [minX, minY, maxX, maxY] = [
         Math.floor(bounds!.x[0] - lowestX),
         Math.floor(bounds!.y[0] - lowestY),
-        Math.floor(bounds!.x[1] - lowestX) + 200,
-        Math.floor(bounds!.y[1] - lowestY) + 200,
+        Math.floor(bounds!.x[1] - lowestX),
+        Math.floor(bounds!.y[1] - lowestY),
       ];
       const width = maxX - minX;
       const height = maxY - minY;
-      const scaledWidth = Math.floor(width / 4);
-      const scaledHeight = Math.floor(height / 4);
+      const scaledWidth = Math.floor(width);
+      const scaledHeight = Math.floor(height);
 
       const sparseMap: number[][] = [];
       for (let i = 0; i < scaledHeight; i++) {
@@ -361,19 +364,11 @@ export default class Main extends Scene {
         }
       }
       for (const n of movedData?.nodes || []) {
-        // buildBaseEntity(
-        //   Math.floor(n.x / 3),
-        //   Math.floor(n.y / 3),
-        //   2,
-        //   0,
-        //   world,
-        //   "autotile"
-        // );
-        const y = Math.floor(n.y / 4);
-        const x = Math.floor(n.x / 4);
+        const y = Math.floor(n.y);
+        const x = Math.floor(n.x);
         for (
           let radius = 0;
-          radius < GROUP_NODE_SIZES[(n as NodeType).group] / 1.5;
+          radius < GROUP_NODE_SIZES[(n as NodeType).group];
           radius++
         ) {
           for (let angle = 0; angle < 360; angle += 1) {
@@ -385,30 +380,32 @@ export default class Main extends Scene {
         }
       }
       for (const l of movedData?.links || []) {
-        const startX = Math.floor((l.source as NodeType).x! / 8);
-        const startY = Math.floor((l.source as NodeType).y! / 8);
-        const endX = Math.floor((l.target as NodeType).x! / 8);
-        const endY = Math.floor((l.target as NodeType).y! / 8);
+        const startX = Math.floor((l.source as NodeType).x!);
+        const startY = Math.floor((l.source as NodeType).y!);
+        const endX = Math.floor((l.target as NodeType).x!);
+        const endY = Math.floor((l.target as NodeType).y!);
 
         // integer step from start to end
-        const stepX = endX - startX;
-        const stepY = endY - startY;
-        const step = Math.max(Math.abs(stepX), Math.abs(stepY));
-        const stepXNormalized = stepX / step;
-        const stepYNormalized = stepY / step;
 
-        let x = startX;
-        let y = startY;
-        for (let i = 0; i < step; i++) {
-          x += stepXNormalized;
-          y += stepYNormalized;
-          if (!sparseMap[Math.floor(y)]) {
-          }
-          sparseMap[Math.floor(y) - 1][Math.floor(x)] = 1;
-          sparseMap[Math.floor(y)][Math.floor(x) - 1] = 1;
+        const slope = (endY - startY) / (endX - startX);
+
+        for (
+          let x = Math.min(startX, endX);
+          x < Math.max(startX, endX);
+          x += 0.1
+        ) {
+          const y = slope * (x - startX) + startY;
+          sparseMap[Math.floor(y)] ||= [];
           sparseMap[Math.floor(y)][Math.floor(x)] = 1;
-          sparseMap[Math.floor(y)][Math.floor(x) + 1] = 1;
-          sparseMap[Math.floor(y) + 1][Math.floor(x)] = 1;
+          const randomRadius = Phaser.Math.FloatBetween(1, 3);
+          for (let radius = 0; radius < randomRadius; radius += 0.1) {
+            for (let angle = 0; angle < 360; angle += 1) {
+              const dx = Math.cos(angle) * radius;
+              const dy = Math.sin(angle) * radius;
+              sparseMap[Math.floor(y + dy)] ||= [];
+              sparseMap[Math.floor(y + dy)][Math.floor(x + dx)] = 1;
+            }
+          }
         }
       }
 
@@ -534,49 +531,37 @@ export default class Main extends Scene {
 
       world.map = tileData;
 
+      // choose 3 random non-adjacent positions
+      const positions: { x: number; y: number }[] = [];
+
+      // create an array of indices of all non-zero positions
+      const indices: number[] = [];
+      for (let i = 0; i < scaledWidth; i++) {
+        for (let j = 0; j < scaledHeight; j++) {
+          if (tileData[j]?.[i]) {
+            indices.push(i + j * scaledWidth);
+          }
+        }
+      }
+
       // finds a random non-zero position in sparseMap
       const randomPositionOnMap = () => {
-        let x = Phaser.Math.Between(0, scaledWidth - 1);
-        let y = Phaser.Math.Between(0, scaledHeight - 1);
-
-        while (!tileData[y]?.[x]) {
-          x = Phaser.Math.Between(0, scaledWidth - 1);
-          y = Phaser.Math.Between(0, scaledHeight - 1);
-        }
+        const index = Phaser.Math.RND.pick(indices);
+        const x = index % scaledWidth;
+        const y = Math.floor(index / scaledWidth);
         return { x, y };
       };
 
       const { x: startX, y: startY } = randomPositionOnMap();
       this.player = buildPlayerEntity(startX, startY, 3, world);
 
-      // choose 3 random non-adjacent positions
-      const positions: { x: number; y: number }[] = [];
       while (positions.length < 3) {
-        let x = Phaser.Math.Between(
-          midWidth - initialRoomSize / 2 + 2,
-          midWidth + initialRoomSize / 2 - 2
-        );
-        let y = Phaser.Math.Between(
-          midHeight - initialRoomSize / 2 + 2,
-          midHeight + initialRoomSize / 2 - 2
-        );
-
-        while (!tileData[x][y]) {
-          x = Phaser.Math.Between(
-            midWidth - initialRoomSize / 2 + 2,
-            midWidth + initialRoomSize / 2 - 2
-          );
-          y = Phaser.Math.Between(
-            midHeight - initialRoomSize / 2 + 2,
-            midHeight + initialRoomSize / 2 - 2
-          );
-        }
-
+        const { x, y } = randomPositionOnMap();
         if (
           positions.filter(
             (p) =>
               Phaser.Math.Distance.Between(p.x, p.y, x, y) < 2 ||
-              grid[x][y] === 1
+              grid[x]?.[y] === 1
           ).length === 0
         ) {
           positions.push({ x, y });
@@ -598,22 +583,9 @@ export default class Main extends Scene {
       blocks.forEach((b) => {
         const pathLength = Phaser.Math.Between(5, 7);
         for (let i = 0; i < pathLength; i++) {
-          Position.x[b] += Phaser.Math.Between(-1, 1);
-          Position.y[b] += Phaser.Math.Between(-1, 1);
-
-          // clamp the position to the map
-          if (Position.x[b] < midWidth - initialRoomSize / 2 + 2) {
-            Position.x[b] = midWidth - initialRoomSize / 2 + 2;
-          }
-          if (Position.x[b] > midWidth + initialRoomSize / 2 - 2) {
-            Position.x[b] = midWidth + initialRoomSize / 2 - 2;
-          }
-          if (Position.y[b] < midHeight - initialRoomSize / 2 + 2) {
-            Position.y[b] = midHeight - initialRoomSize / 2 + 2;
-          }
-          if (Position.y[b] > midHeight + initialRoomSize / 2 - 2) {
-            Position.y[b] = midHeight + initialRoomSize / 2 - 2;
-          }
+          const { x, y } = randomPositionOnMap();
+          Position.x[b] = x;
+          Position.y[b] = y;
 
           Destination.x[b] = Position.x[b];
           Destination.y[b] = Position.y[b];
@@ -641,8 +613,8 @@ export default class Main extends Scene {
       this.cameras.main.scrollY +=
         (destinationY - this.cameras.main.scrollY) * 0.005 * delta;
       if (
-        Math.abs(destinationX - this.cameras.main.scrollX) < delta &&
-        Math.abs(destinationY - this.cameras.main.scrollY) < delta
+        Math.abs(destinationX - this.cameras.main.scrollX) < delta * 0.1 &&
+        Math.abs(destinationY - this.cameras.main.scrollY) < delta * 0.1
       ) {
         this.isFollowing = true;
         this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
