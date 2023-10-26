@@ -5,7 +5,7 @@ import SpriteComponent from "../components/Sprite";
 import game from "../game";
 import textures from "../resources/textures";
 import Texture from "../components/Texture";
-import ConditionalDestroy from "../components/CoditionalDestroy";
+import ConditionalDestroy from "../components/ConditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
 
 const spriteQuery = defineQuery([SpriteComponent, ConditionalDestroy]);

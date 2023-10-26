@@ -27,7 +27,7 @@ import Destination from "../components/Destination";
 import animations from "../resources/animations";
 import Sprite from "../components/Sprite";
 import conditionalDestroySystem from "../systems/conditionalDestroySystem";
-import ConditionalDestroy from "../components/CoditionalDestroy";
+import ConditionalDestroy from "../components/ConditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
 import { GROUP_NODE_SIZES, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
