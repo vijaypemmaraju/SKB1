@@ -13,6 +13,8 @@ import Scale from "./components/Scale";
 import Icy from "./components/Icy";
 import Input from "./components/Input";
 import Goal from "./components/Goal";
+import CameraTarget from "./components/CameraTarget";
+import CameraPointOfInterest from "./components/CameraPointOfInterest";
 
 export const buildBaseEntity = (
   x: number,
@@ -68,6 +70,7 @@ export const buildGoalEntity = (
 ): number => {
   const eid = buildBaseEntity(x, y, z, 6, world);
   addComponent(world, Goal, eid);
+  addComponent(world, CameraPointOfInterest, eid);
   return eid;
 };
 
@@ -93,6 +96,7 @@ export const buildPushableBlockEntity = (
   addComponent(world, Destination, eid);
   addComponent(world, Collidable, eid);
   addComponent(world, Pushable, eid);
+  addComponent(world, CameraPointOfInterest, eid);
   return eid;
 };
 
@@ -106,6 +110,7 @@ export const buildPlayerEntity = (
   addComponent(world, Collidable, eid);
   addComponent(world, Destination, eid);
   addComponent(world, Input, eid);
+  addComponent(world, CameraTarget, eid);
   Sprite.animated[eid] = 1;
   return eid;
 };

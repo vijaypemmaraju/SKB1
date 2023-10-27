@@ -31,6 +31,7 @@ import ConditionalDestroy from "../components/ConditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
 import { GROUP_NODE_SIZES, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
+import cameraSystem from "../systems/cameraSystem";
 
 export default class Main extends Scene {
   world!: World;
@@ -58,6 +59,7 @@ export default class Main extends Scene {
       movementSystem,
       goalSystem,
       spriteRenderingSystem,
+      cameraSystem,
       conditionalDestroySystem
     );
 
@@ -87,6 +89,18 @@ export default class Main extends Scene {
       this.cameras.main.width,
       this.cameras.main.height
     );
+
+    const secondaryCamera = this.cameras.add(
+      this.cameras.main.x,
+      this.cameras.main.y,
+      this.cameras.main.width,
+      this.cameras.main.height,
+      false
+    );
+
+    secondaryCamera.alpha = 0;
+
+    this.world.secondaryCamera = secondaryCamera;
 
     this.world.renderTexture = rt1;
 
@@ -199,6 +213,7 @@ export default class Main extends Scene {
           delay: 2000,
           ease: Phaser.Math.Easing.Quadratic.InOut,
         });
+        secondaryCamera.zoom = 2.5;
       }
     });
 
@@ -565,6 +580,7 @@ export default class Main extends Scene {
           ).length === 0
         ) {
           positions.push({ x, y });
+          grid[x] ||= [];
           grid[x][y] = 1;
         }
       }
@@ -599,26 +615,27 @@ export default class Main extends Scene {
   update(time: number, delta: number) {
     // Update game objects here
     this.pipeline(this.world);
+    this.world.currentCamera = this.cameras.main;
 
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
     }
 
-    const playerSprite = sprites.get(this.player);
-    if (playerSprite && !this.isFollowing) {
-      const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
-      const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
-      this.cameras.main.scrollX +=
-        (destinationX - this.cameras.main.scrollX) * 0.005 * delta;
-      this.cameras.main.scrollY +=
-        (destinationY - this.cameras.main.scrollY) * 0.005 * delta;
-      if (
-        Math.abs(destinationX - this.cameras.main.scrollX) < delta * 0.1 &&
-        Math.abs(destinationY - this.cameras.main.scrollY) < delta * 0.1
-      ) {
-        this.isFollowing = true;
-        this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
-      }
-    }
+    // const playerSprite = sprites.get(this.player);
+    // if (playerSprite && !this.isFollowing) {
+    //   const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
+    //   const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
+    //   this.cameras.main.scrollX +=
+    //     (destinationX - this.cameras.main.scrollX) * 0.005 * delta;
+    //   this.cameras.main.scrollY +=
+    //     (destinationY - this.cameras.main.scrollY) * 0.005 * delta;
+    //   if (
+    //     Math.abs(destinationX - this.cameras.main.scrollX) < delta * 0.1 &&
+    //     Math.abs(destinationY - this.cameras.main.scrollY) < delta * 0.1
+    //   ) {
+    //     this.isFollowing = true;
+    //     this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
+    //   }
+    // }
   }
 }

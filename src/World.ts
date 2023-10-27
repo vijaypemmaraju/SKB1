@@ -8,7 +8,9 @@ type World = IWorld & {
     then: number;
   };
   renderTexture: Phaser.GameObjects.RenderTexture;
-  map: number[][]
+  currentCamera: Phaser.Cameras.Scene2D.Camera;
+  secondaryCamera: Phaser.Cameras.Scene2D.Camera;
+  map: number[][];
 };
 
 export default World;
