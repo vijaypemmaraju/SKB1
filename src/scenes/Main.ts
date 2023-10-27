@@ -144,8 +144,10 @@ export default class Main extends Scene {
     });
 
     const colorMatrix = this.cameras.main.postFX.addColorMatrix().sepia();
-    // const saturation = this.cameras.main.postFX.addColorMatrix().saturate();
-    // saturation.alpha = 0;
+    const red = this.cameras.main.postFX.addGradient(0xff0000, 0xff0000, 0);
+    red.alpha = 1;
+    const night = this.cameras.main.postFX.addColorMatrix().night();
+    night.alpha = 0;
     const bloom = this.cameras.main.postFX.addBloom(0xffffff, 1, 1, 1.1, 1.5);
 
     this.tweens.add({
@@ -177,11 +179,24 @@ export default class Main extends Scene {
           alpha: 0,
           duration: 3000,
         });
-        // this.tweens.add({
-        //   targets: saturation,
-        //   alpha: 0.5,
-        //   duration: 3000,
-        // });
+        this.tweens.add({
+          targets: red,
+          alpha: 0.7,
+          delay: 2000,
+          duration: 15000,
+        });
+        this.tweens.add({
+          targets: red,
+          alpha: 1,
+          delay: 17000,
+          duration: 5000,
+        });
+        this.tweens.add({
+          targets: night,
+          alpha: 0.5,
+          delay: 15000,
+          duration: 10000,
+        });
         this.tweens.add({
           targets: vignette,
           radius: 0.3,
@@ -189,7 +204,7 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: bloom,
-          strength: 1.2,
+          strength: 1.1,
           duration: 3000,
         });
         this.tweens.add({
@@ -199,12 +214,12 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: barrel,
-          amount: 1.01,
+          amount: 1.05,
           duration: 3000,
         });
         this.tweens.add({
           targets: tiltShift,
-          radius: 0.1,
+          radius: 0.025,
           duration: 3000,
         });
         this.tweens.add({
