@@ -77,10 +77,11 @@ export default class Main extends Scene {
       spacing: 1,
     });
     this.load.glsl("water", "shaders/water.frag");
-    this.load.audio("music", "music.mp3");
+    this.load.audio("music", "skb1_1_v0.2.mp3");
   }
 
   create() {
+    this.sound.play("music", { loop: true });
     this.anims.createFromAseprite("bunny");
     this.anims.createFromAseprite("grass");
     const rt1 = this.add.renderTexture(
