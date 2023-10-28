@@ -13,7 +13,7 @@ import useStore from "./useStore";
 
 const graphElement = document.createElement("div");
 graphElement.id = "graph";
-graphElement.style.display = "none";
+// graphElement.style.display = "none";
 document.body.appendChild(graphElement);
 
 const data = graphGenerator();
@@ -46,10 +46,11 @@ graph
   .linkLabel("group")
   .linkDirectionalArrowLength(4)
   .linkWidth(20)
+  .linkCurvature(1)
   .linkCanvasObjectMode(() => "after");
 
 graph.d3Force("link")?.distance((link: LinkType) => {
-  return 50;
+  return Phaser.Math.Between(25, 150);
 });
 
 useStore.setState({ forceGraphInstance: graph });

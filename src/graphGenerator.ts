@@ -27,7 +27,8 @@ export const GROUP_COLORS = {
 };
 
 export type LinkType = LinkObject & {
-  group: "CONTAINS" | "SOLVES" | "UNLOCKS" | "LEADS_TO";
+  group?: "CONTAINS" | "SOLVES" | "UNLOCKS" | "LEADS_TO";
+  __controlPoints?: number[];
 };
 
 type GraphData = {

@@ -4,8 +4,8 @@ import Main from "./scenes/Main";
 const width = Math.min(512, window.innerWidth);
 const game = new Game({
   width: window.innerWidth,
-  height: window.innerHeight,
-  // height: window.innerHeight / 2,
+  // height: window.innerHeight,
+  height: window.innerHeight / 2,
   antialias: false,
   type: AUTO,
   scene: Main,

@@ -29,9 +29,10 @@ import Sprite from "../components/Sprite";
 import conditionalDestroySystem from "../systems/conditionalDestroySystem";
 import ConditionalDestroy from "../components/ConditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
-import { GROUP_NODE_SIZES, NodeType } from "../graphGenerator";
+import { GROUP_NODE_SIZES, LinkType, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
 import cameraSystem from "../systems/cameraSystem";
+import pushableSystem from "../systems/pushableSystem";
 
 export default class Main extends Scene {
   world!: World;
@@ -55,6 +56,7 @@ export default class Main extends Scene {
       spriteSystem,
       inputSystem,
       destinationSystem,
+      pushableSystem,
       mapMovementSystem,
       movementSystem,
       goalSystem,
@@ -179,24 +181,24 @@ export default class Main extends Scene {
           alpha: 0,
           duration: 3000,
         });
-        this.tweens.add({
-          targets: red,
-          alpha: 0.7,
-          delay: 2000,
-          duration: 15000,
-        });
-        this.tweens.add({
-          targets: red,
-          alpha: 1,
-          delay: 17000,
-          duration: 5000,
-        });
-        this.tweens.add({
-          targets: night,
-          alpha: 0.5,
-          delay: 15000,
-          duration: 10000,
-        });
+        // this.tweens.add({
+        //   targets: red,
+        //   alpha: 0.7,
+        //   delay: 2000,
+        //   duration: 15000,
+        // });
+        // this.tweens.add({
+        //   targets: red,
+        //   alpha: 1,
+        //   delay: 17000,
+        //   duration: 5000,
+        // });
+        // this.tweens.add({
+        //   targets: night,
+        //   alpha: 0.5,
+        //   delay: 15000,
+        //   duration: 10000,
+        // });
         this.tweens.add({
           targets: vignette,
           radius: 0.3,
@@ -224,12 +226,12 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: this.cameras.main,
-          zoom: 2.5,
+          zoom: 0.3,
           duration: 2000,
           delay: 2000,
           ease: Phaser.Math.Easing.Quadratic.InOut,
         });
-        secondaryCamera.zoom = 2.5;
+        secondaryCamera.zoom = 0.3;
       }
     });
 
@@ -341,6 +343,7 @@ export default class Main extends Scene {
       const tileData: number[][] = [];
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
+      console.log(data);
       const lowestX =
         Math.min(...(data?.nodes.map((n) => (n as NodeType).x!) || [])) - 200;
       const lowestY =
@@ -352,19 +355,26 @@ export default class Main extends Scene {
           x: ((n as NodeType).x! - lowestX) / 4,
           y: ((n as NodeType).y! - lowestY) / 4,
         })),
-        links: data?.links.map((l) => ({
-          ...l,
-          source: {
-            ...(l.source as NodeType),
-            x: ((l.source as NodeType).x! - lowestX) / 4,
-            y: ((l.source as NodeType).y! - lowestY) / 4,
-          },
-          target: {
-            ...(l.target as NodeType),
-            x: ((l.target as NodeType).x! - lowestX) / 4,
-            y: ((l.target as NodeType).y! - lowestY) / 4,
-          },
-        })),
+        links: data?.links.map(
+          (l) =>
+            ({
+              ...l,
+              source: {
+                ...(l.source as NodeType),
+                x: ((l.source as NodeType).x! - lowestX) / 4,
+                y: ((l.source as NodeType).y! - lowestY) / 4,
+              },
+              target: {
+                ...(l.target as NodeType),
+                x: ((l.target as NodeType).x! - lowestX) / 4,
+                y: ((l.target as NodeType).y! - lowestY) / 4,
+              },
+              __controlPoints: [
+                ((l as any).__controlPoints[0] - lowestX) / 4,
+                ((l as any).__controlPoints[1] - lowestY) / 4,
+              ],
+            } as LinkType)
+        ),
       };
 
       console.log(movedData?.links);
@@ -420,15 +430,21 @@ export default class Main extends Scene {
 
         const slope = (endY - startY) / (endX - startX);
 
-        for (
-          let x = Math.min(startX, endX);
-          x < Math.max(startX, endX);
-          x += 0.1
-        ) {
-          const y = slope * (x - startX) + startY;
+        const bezier = new Phaser.Curves.QuadraticBezier(
+          new Phaser.Math.Vector2(startX, startY),
+          new Phaser.Math.Vector2(l.__controlPoints[0], l.__controlPoints[1]),
+          new Phaser.Math.Vector2(endX, endY)
+        );
+
+        console.log(bezier);
+        const points = bezier.getDistancePoints(4);
+
+        for (const point of points) {
+          const x = point.x;
+          const y = point.y;
           sparseMap[Math.floor(y)] ||= [];
           sparseMap[Math.floor(y)][Math.floor(x)] = 1;
-          const randomRadius = Phaser.Math.FloatBetween(1, 3);
+          const randomRadius = Phaser.Math.FloatBetween(2, 3);
           for (let radius = 0; radius < randomRadius; radius += 0.1) {
             for (let angle = 0; angle < 360; angle += 1) {
               const dx = Math.cos(angle) * radius;
