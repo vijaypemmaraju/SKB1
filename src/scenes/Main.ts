@@ -60,8 +60,8 @@ export default class Main extends Scene {
       mapMovementSystem,
       movementSystem,
       goalSystem,
-      spriteRenderingSystem,
       cameraSystem,
+      spriteRenderingSystem,
       conditionalDestroySystem
     );
 
@@ -89,9 +89,22 @@ export default class Main extends Scene {
     const rt1 = this.add.renderTexture(
       0,
       0,
-      this.cameras.main.width,
-      this.cameras.main.height
+      window.innerWidth,
+      window.innerHeight
     );
+    rt1.setOrigin(0, 0);
+    rt1.setScrollFactor(0);
+    const glow = rt1.postFX.addGlow(0xffffff, 2.5, 2.5, true);
+    let time = 0;
+    this.time.addEvent({
+      delay: 1,
+      callback: () => {
+        // glow.innerStrength = 0.5 + Math.sin(time / 10000) * 2.5;
+        glow.outerStrength = 0.5 + Math.sin(time / 10000) * 2.5;
+        time += this.game.loop.delta;
+      },
+      loop: true,
+    });
 
     const secondaryCamera = this.cameras.add(
       this.cameras.main.x,
@@ -226,7 +239,7 @@ export default class Main extends Scene {
         });
         this.tweens.add({
           targets: this.cameras.main,
-          zoom: 0.3,
+          zoom: 3.5,
           duration: 2000,
           delay: 2000,
           ease: Phaser.Math.Easing.Quadratic.InOut,
@@ -646,12 +659,23 @@ export default class Main extends Scene {
 
   update(time: number, delta: number) {
     // Update game objects here
+    const rt = this.world.renderTexture;
+    // const main = this.cameras.main;
+    // rt.camera.x = -main.scrollX;
+    // rt.camera.y = -main.scrollY;
+
+    rt.clear();
+
     this.pipeline(this.world);
     this.world.currentCamera = this.cameras.main;
-
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
     }
+
+    // this.world.renderTexture.resize(
+    //   this.game.scale.width,
+    //   this.game.scale.height
+    // );
 
     // const playerSprite = sprites.get(this.player);
     // if (playerSprite && !this.isFollowing) {

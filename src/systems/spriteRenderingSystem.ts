@@ -8,6 +8,8 @@ import sprites from "../resources/sprites";
 import Sprite from "../components/Sprite";
 import Texture from "../components/Texture";
 import animations from "../resources/animations";
+import textures from "../resources/textures";
+import getCanvasPosition from "../utils/getCanvasPosition";
 
 const spriteQuery = defineQuery([
   Sprite,
@@ -23,8 +25,11 @@ export const TILE_HEIGHT = 16;
 
 const spriteRenderingSystem = (world: World) => {
   const ents = spriteQuery(world);
+  const entsSortedByDepth = ents.sort((a, b) => {
+    return Position.z[a] - Position.z[b];
+  });
   world.renderTexture.beginDraw();
-  for (let i = 0; i < ents.length; i++) {
+  for (let i = 0; i < entsSortedByDepth.length; i++) {
     const eid = ents[i];
     const sprite = sprites.get(eid);
     if (sprite) {
@@ -34,7 +39,18 @@ const spriteRenderingSystem = (world: World) => {
       sprite.rotation = Rotation.angle[eid];
       sprite.scaleX = Scale.x[eid];
       sprite.scaleY = Scale.y[eid];
-      // world.renderTexture.draw(sprite);
+      const camera = world.currentCamera;
+
+      const screenPosition = getCanvasPosition(sprite, camera);
+      // get screen point
+      world.renderTexture.batchDrawFrame(
+        textures.get(eid),
+        Texture.frame[eid],
+        screenPosition.x,
+        screenPosition.y
+        // sprite.x,
+        // sprite.y
+      );
       // const text = sprite.text;
       // if (text) {
       //   text.x = sprite.x;
