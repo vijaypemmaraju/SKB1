@@ -136,11 +136,15 @@ vec3 water(vec2 uv, vec3 cdir)
 
     vec3 ret = mix(WATER_COL, WATER2_COL, waterlayer(uv + dist.xy));
     ret = mix(ret, FOAM_COL, waterlayer(vec2(1.0) - uv - dist.yx));
+
     return ret;
 }
 
 
 void main()
 {
-    gl_FragColor = vec4(water(fragCoord/32., vec3(0,1,0)),1);
+    vec2 uv = fragCoord / 32.0;
+
+    uv = floor(uv * 32.0) / 32.0;
+    gl_FragColor = vec4(water(uv, vec3(0,1,0)),1);
 }

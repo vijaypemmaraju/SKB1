@@ -17,12 +17,23 @@ const spriteSystem = (world: World) => {
     if (!texture) {
       continue;
     }
-    const sprite = game.scene.scenes[0].add.sprite(
-      0,
-      0,
-      texture,
-      Texture.frame[eid]
-    );
+    let sprite;
+    if (texture === "autotile") {
+      sprite = new Phaser.GameObjects.Sprite(
+        game.scene.scenes[0],
+        0,
+        0,
+        texture,
+        Texture.frame[eid]
+      );
+    } else {
+      sprite = game.scene.scenes[0].add.sprite(
+        0,
+        0,
+        texture,
+        Texture.frame[eid]
+      );
+    }
     // const text = game.scene.scenes[0].add.text(
     //   0,
     //   0,

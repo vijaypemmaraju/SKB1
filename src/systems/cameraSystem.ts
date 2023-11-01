@@ -69,6 +69,9 @@ const cameraSystem = (world: World) => {
   camera.scrollX += velocity.x * speed * world.time.delta;
   camera.scrollY += velocity.y * speed * world.time.delta;
 
+  camera.scrollX = Math.floor(camera.scrollX);
+  camera.scrollY = Math.floor(camera.scrollY);
+
   secondaryCamera.scrollX = destinationX;
   secondaryCamera.scrollY = destinationY;
   return world;

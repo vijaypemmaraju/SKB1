@@ -43,14 +43,17 @@ const spriteRenderingSystem = (world: World) => {
 
       const screenPosition = getCanvasPosition(sprite, camera);
       // get screen point
-      world.renderTexture.batchDrawFrame(
-        textures.get(eid),
-        Texture.frame[eid],
-        screenPosition.x,
-        screenPosition.y
-        // sprite.x,
-        // sprite.y
-      );
+      const texture = textures.get(eid);
+      if (texture === "autotile") {
+        world.renderTexture.batchDrawFrame(
+          textures.get(eid),
+          Texture.frame[eid],
+          screenPosition.x,
+          screenPosition.y
+          // sprite.x,
+          // sprite.y
+        );
+      }
       // const text = sprite.text;
       // if (text) {
       //   text.x = sprite.x;
