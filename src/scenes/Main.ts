@@ -510,12 +510,12 @@ void main() {
         });
         this.tweens.add({
           targets: barrel,
-          amount: 1.01,
+          amount: 1.0,
           duration: 3000,
         });
         this.tweens.add({
           targets: tiltShift,
-          radius: 0.01,
+          radius: 0,
           duration: 3000,
         });
         this.tweens.add({
