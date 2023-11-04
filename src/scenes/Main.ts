@@ -342,7 +342,7 @@ void main() {
     const grassShader = this.add.shader(
       base,
       0,
-      0,
+      4, // wtf why
       window.innerWidth,
       window.innerHeight,
       []
