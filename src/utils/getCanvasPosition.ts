@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 
 function getCanvasPosition(
-  gameObject: Phaser.GameObjects.GameObject,
+  gameObject: Phaser.GameObjects.Sprite,
   camera: Phaser.Cameras.Scene2D.Camera
 ) {
   return {

@@ -726,7 +726,10 @@ void main() {
 
         const bezier = new Phaser.Curves.QuadraticBezier(
           new Phaser.Math.Vector2(startX, startY),
-          new Phaser.Math.Vector2(l.__controlPoints[0], l.__controlPoints[1]),
+          new Phaser.Math.Vector2(
+            (l as any).__controlPoints[0],
+            (l as any).__controlPoints[1]
+          ),
           new Phaser.Math.Vector2(endX, endY)
         );
 

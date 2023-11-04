@@ -1,5 +1,6 @@
 import { render } from "react-dom";
 import "./style.css";
+import Phaser from "phaser";
 import "./game";
 import UI from "./UI";
 import ForceGraph, { LinkObject, NodeObject } from "force-graph";
@@ -26,10 +27,11 @@ graph
   .d3AlphaDecay(0)
   .d3VelocityDecay(0)
   .height(window.innerHeight / 2)
+  // .height(window.innerHeight)
   // Add collision and bounding box forces
   .nodeId("id")
-  .nodeAutoColorBy("group")
-  .nodeLabel("id")
+  .nodeAutoColorBy("depth")
+  .nodeLabel("depth")
   .nodeCanvasObject((node, ctx, globalScale) => {
     ctx.fillStyle = GROUP_COLORS[(node as NodeType).group];
     ctx.beginPath();
@@ -43,15 +45,17 @@ graph
     );
     ctx.fill();
   })
-  .linkLabel("group")
-  .linkDirectionalArrowLength(4)
-  .linkWidth(20)
-  .linkCurvature(1)
+  // .linkLabel("group")
+  // .linkDirectionalArrowLength(4)
+  .linkWidth(10)
+  .linkCurvature(0.25)
   .linkCanvasObjectMode(() => "after");
 
 graph.d3Force("link")?.distance((link: LinkType) => {
-  return Phaser.Math.Between(25, 150);
+  return Phaser.Math.Between(15, 125);
 });
+
+graph.d3Force('charge').strength(-100)
 
 useStore.setState({ forceGraphInstance: graph });
 

@@ -5,10 +5,11 @@ import { LinkObject, NodeObject } from "force-graph";
 export type NodeType = NodeObject & {
   group: "ROOT" | "PUZZLE" | "CLUE" | "LOCK" | "KEY" | "ROOM";
   description?: string;
+  depth?: number;
 };
 
 export const GROUP_NODE_SIZES: { [key in NodeType["group"]]: number } = {
-  ROOT: 10,
+  ROOT: 20,
   PUZZLE: 8,
   CLUE: 4,
   LOCK: 4,
@@ -68,12 +69,12 @@ const LOCKS = ["Funny Troll", "Silly Bridge", "Big Boulder"];
 const KEYS = ["Troll Key", "Bridge Key", "Boulder Key"];
 
 const graphGenerator = () => {
-  const nodes: NodeType[] = [];
-  const links: LinkType[] = [];
-  // nodes.push({
-  //   id: "ROOT",
-  //   group: "ROOT",
-  // });
+  let nodes: NodeType[] = [];
+  let links: LinkType[] = [];
+  nodes.push({
+    id: "ROOT",
+    group: "ROOT",
+  });
   // Add 5 random rooms, non-duplicate
   let roomNames = [...ROOMS];
   // shuffle rooms
@@ -81,7 +82,7 @@ const graphGenerator = () => {
     const j = Math.floor(Math.random() * (i + 1));
     [roomNames[i], roomNames[j]] = [roomNames[j], roomNames[i]];
   }
-  roomNames = roomNames.slice(0, 5);
+  roomNames = roomNames.slice(0, 3);
 
   const puzzles = [];
 
@@ -92,13 +93,11 @@ const graphGenerator = () => {
       group: "ROOM",
     });
 
-    // if (Phaser.Math.Between(0, 1) === 0) {
-    //   links.push({
-    //     source: "ROOT",
-    //     target: roomName,
-    //     group: "LEADS_TO",
-    //   });
-    // }
+    links.push({
+      source: "ROOT",
+      target: roomName,
+      group: "LEADS_TO",
+    });
 
     // Add 1 puzzle per room
     if (i < PUZZLES.length - 1) {
@@ -177,57 +176,133 @@ const graphGenerator = () => {
     });
   }
 
-  for (const node of nodes) {
-    const connectedLinks = links.filter(
-      (link) => link.source === node.id || link.target === node.id
-    );
+  // for (const node of nodes) {
+  //   const connectedLinks = links.filter(
+  //     (link) => link.source === node.id || link.target === node.id
+  //   );
 
-    let maxNodes = 1;
-    for (const otherNode of nodes) {
-      if (
-        otherNode.group === "ROOM" &&
-        !connectedLinks.some(
-          (link) => link.source === otherNode.id || link.target === otherNode.id
-        ) &&
-        maxNodes > 0
-      ) {
-        maxNodes -= 1;
-        // links.push({
-        //   source: node.id,
-        //   target: otherNode.id,
-        //   group: "LEADS_TO",
-        // });
+  //   let maxNodes = 1;
+  //   for (const otherNode of nodes) {
+  //     if (
+  //       otherNode.group === "ROOM" &&
+  //       !connectedLinks.some(
+  //         (link) => link.source === otherNode.id || link.target === otherNode.id
+  //       ) &&
+  //       maxNodes > 0
+  //     ) {
+  //       maxNodes -= 1;
+  //       // links.push({
+  //       //   source: node.id,
+  //       //   target: otherNode.id,
+  //       //   group: "LEADS_TO",
+  //       // });
+  //     }
+  //   }
+  // }
+
+  // find any orphan rooms and connect them to another room
+
+  // const orphanRooms = nodes.filter(
+  //   (node) =>
+  //     node.group === "ROOM" &&
+  //     !links.some((link) => link.source === node.id || link.target === node.id)
+  // );
+
+  // for (const orphanRoom of orphanRooms) {
+  //   const otherRooms = nodes.filter(
+  //     (node) =>
+  //       node.group === "ROOM" &&
+  //       !links.some(
+  //         (link) => link.source === node.id || link.target === node.id
+  //       ) &&
+  //       node.id !== orphanRoom.id
+  //   );
+
+  //   if (otherRooms.length > 0) {
+  //     const otherRoom = otherRooms[0];
+  //     links.push({
+  //       source: orphanRoom.id,
+  //       target: otherRoom.id,
+  //       group: "LEADS_TO",
+  //     });
+  //   }
+  // }
+
+  // perform a BFS to find the depth of each node
+  const queue = ["ROOT"];
+  const visited = new Set<string>();
+  const depthMap: { [key: string]: number } = {
+    [queue[0]]: 0,
+  };
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    visited.add(node);
+    const depth = depthMap[node];
+    const connectedNodes = links
+      .filter((link) => link.source === node || link.target === node)
+      .map((link) => (link.source === node ? link.target : link.source));
+
+    for (const connectedNode of connectedNodes) {
+      if (!visited.has(connectedNode)) {
+        queue.push(connectedNode);
+        depthMap[connectedNode] = depth + 1;
       }
     }
   }
 
-  // find any orphan rooms and connect them to another room
-
-  const orphanRooms = nodes.filter(
-    (node) =>
-      node.group === "ROOM" &&
-      !links.some((link) => link.source === node.id || link.target === node.id)
-  );
-
-  for (const orphanRoom of orphanRooms) {
-    const otherRooms = nodes.filter(
-      (node) =>
-        node.group === "ROOM" &&
-        !links.some(
-          (link) => link.source === node.id || link.target === node.id
-        ) &&
-        node.id !== orphanRoom.id
-    );
-
-    if (otherRooms.length > 0) {
-      const otherRoom = otherRooms[0];
-      links.push({
-        source: orphanRoom.id,
-        target: otherRoom.id,
-        group: "LEADS_TO",
-      });
-    }
+  for (const node of nodes) {
+    node.depth = depthMap[node.id];
   }
+
+  // we want only a single link between each depth level
+  // so we need to remove any links that are not the shortest path
+  // between two nodes of the same depth
+
+  const maxDepth = Math.max(...nodes.map((node) => node.depth!));
+  console.log(maxDepth);
+  for (let i = 1; i < maxDepth - 2; i++) {
+    let linksAtDepth = links.filter((link) => {
+      const source = nodes.find((node) => node.id === link.source);
+      const target = nodes.find((node) => node.id === link.target);
+
+      // return true if target is one level deeper than source but only if removing this link
+      // would not disconnect the graph
+      return (
+        source!.depth === i &&
+        target!.depth === i + 1 &&
+        links.filter(
+          (otherLink) =>
+            (otherLink.source === link.source &&
+              otherLink.target === link.target) ||
+            (otherLink.source === link.target &&
+              otherLink.target === link.source)
+        ).length > 0
+      );
+    });
+
+    // remove a random link from the list
+    const linkIndex = Math.floor(Math.random() * linksAtDepth.length);
+    linksAtDepth = linksAtDepth.filter((_, index) => index !== linkIndex);
+
+    links = links.filter((link) => !linksAtDepth.includes(link));
+    // if (linksAtDepth.length > 1) {
+    //   const linksToRemove = linksAtDepth.slice(1);
+    //   for (const link of linksToRemove) {
+    //     links.splice(
+    //       links.findIndex(
+    //         (otherLink) =>
+    //           (otherLink.source === link.source &&
+    //             otherLink.target === link.target) ||
+    //           (otherLink.source === link.target &&
+    //             otherLink.target === link.source)
+    //       ),
+    //       1
+    //     );
+    //   }
+    // }
+  }
+
+  console.log(nodes, links);
 
   return { nodes, links };
 };

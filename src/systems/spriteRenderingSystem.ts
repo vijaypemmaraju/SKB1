@@ -46,7 +46,7 @@ const spriteRenderingSystem = (world: World) => {
       const texture = textures.get(eid);
       if (texture === "autotile") {
         world.renderTexture.batchDrawFrame(
-          textures.get(eid),
+          textures.get(eid)!,
           Texture.frame[eid],
           screenPosition.x,
           screenPosition.y
