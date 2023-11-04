@@ -1,9 +1,7 @@
 import { Scene } from "phaser";
 import { addComponent, addEntity, createWorld, pipe } from "bitecs";
 import timeSystem from "../systems/timeSystem";
-import spriteRenderingSystem, {
-  TILE_WIDTH,
-} from "../systems/spriteRenderingSystem";
+import spriteRenderingSystem from "../systems/spriteRenderingSystem";
 import spriteSystem from "../systems/spriteSystem";
 import movementSystem from "../systems/movementSystem";
 import World from "../World";
@@ -12,23 +10,16 @@ import destinationSystem from "../systems/destinationSystem";
 import mapMovementSystem from "../systems/mapMovementSystem";
 import Map from "../components/Map";
 import {
-  buildIcyTileEntity,
   buildBaseEntity,
   buildPushableBlockEntity,
   buildPlayerEntity,
-  buildStaticBlockEntity,
   buildGoalEntity,
 } from "../builders";
 import goalSystem from "../systems/goalSystem";
 import useStore from "../useStore";
-import sprites from "../resources/sprites";
 import Position from "../components/Position";
 import Destination from "../components/Destination";
-import animations from "../resources/animations";
-import Sprite from "../components/Sprite";
 import conditionalDestroySystem from "../systems/conditionalDestroySystem";
-import ConditionalDestroy from "../components/ConditionalDestroy";
-import conditionalDestroys from "../resources/conditionalDestroys";
 import { GROUP_NODE_SIZES, LinkType, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
 import cameraSystem from "../systems/cameraSystem";
@@ -72,6 +63,7 @@ export default class Main extends Scene {
     this.load.atlas("sheet", "sheet.png", "sheet.json");
     this.load.aseprite("bunny", "bunny.png", "bunny.json");
     this.load.aseprite("grass", "grass.png", "grass.json");
+    this.load.aseprite("block", "block.png", "block.json");
     this.load.atlas("autotile", "islands-sheet.png", "islands.json");
     this.load.spritesheet("autotile-sheet", "islands-sheet.png", {
       frameWidth: 16,

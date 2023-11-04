@@ -92,7 +92,7 @@ export const buildPushableBlockEntity = (
   z: number,
   world: World
 ): number => {
-  const eid = buildBaseEntity(x, y, z, 2, world);
+  const eid = buildBaseEntity(x, y, z, 2, world, "block");
   addComponent(world, Destination, eid);
   addComponent(world, Collidable, eid);
   addComponent(world, Pushable, eid);
