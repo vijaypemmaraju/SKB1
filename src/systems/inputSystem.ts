@@ -6,8 +6,9 @@ import Destination from "../components/Destination";
 import Position from "../components/Position";
 import Map from "../components/Map";
 import useStore from "../useStore";
+import Velocity from "../components/Velocity";
 
-const inputQuery = defineQuery([Input, Position, Destination]);
+const inputQuery = defineQuery([Input, Position, Velocity]);
 const mapQuery = defineQuery([Map]);
 const inputSystem = (world: World) => {
   const ents = inputQuery(world);
@@ -20,25 +21,25 @@ const inputSystem = (world: World) => {
 
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
-    if (
-      Position.x[eid] === Destination.x[eid] &&
-      Position.y[eid] === Destination.y[eid]
-    ) {
-      Input.lastDirection[eid] = Input.direction[eid];
-      Input.direction[eid] = 0;
-    }
+    // if (
+    //   Position.x[eid] === Destination.x[eid] &&
+    //   Position.y[eid] === Destination.y[eid]
+    // ) {
+    //   Input.lastDirection[eid] = Input.direction[eid];
+    //   Input.direction[eid] = 0;
+    // }
     let input = 0;
     if (up?.isDown || swipe.up) {
-      input = 1;
+      input += 1;
     }
     if (down?.isDown || swipe.down) {
-      input = 2;
+      input += 2;
     }
     if (left?.isDown || swipe.left) {
-      input = 4;
+      input += 4;
     }
     if (right?.isDown || swipe.right) {
-      input = 8;
+      input += 8;
     }
 
     Input.lastDirection[eid] = Input.direction[eid];

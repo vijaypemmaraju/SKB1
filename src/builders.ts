@@ -31,7 +31,6 @@ export const buildBaseEntity = (
   addComponent(world, Scale, eid);
   addComponent(world, Sprite, eid);
   addComponent(world, Texture, eid);
-  addComponent(world, Velocity, eid);
   Position.x[eid] = x;
   Position.y[eid] = y;
   Position.z[eid] = z;
@@ -108,7 +107,7 @@ export const buildPlayerEntity = (
 ): number => {
   const eid = buildBaseEntity(x, y, z, 1, world, "bunny");
   addComponent(world, Collidable, eid);
-  addComponent(world, Destination, eid);
+  // addComponent(world, Destination, eid);
   addComponent(world, Input, eid);
   addComponent(world, CameraTarget, eid);
   Sprite.animated[eid] = 1;

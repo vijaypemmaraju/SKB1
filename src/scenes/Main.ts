@@ -240,7 +240,7 @@ void main() {
 	float noiseY = sampleNoise(fragCoord.y, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
 	// Add the nose to the uv for frayed grass
 	vec2 uv = UV - vec2(0.0, noise / resolution);
-  vec2 downscaled_resolution = vec2(resolution.x / 2.0, resolution.y / 2.0);
+  vec2 downscaled_resolution = vec2(resolution.x / 1., resolution.y / 1.);
 
   vec4 COLOR = vec4(0.0, 0.0, 0.0, 0.0);
 
@@ -257,11 +257,11 @@ void main() {
   uvWorldPosX = floor(uvWorldPosX * downscaled_resolution.x) / downscaled_resolution.x;
   uvWorldPosY = floor(uvWorldPosY * downscaled_resolution.y) / downscaled_resolution.y;
 
-  float pnoise = PerlinNoise2D(uvWorldPosX * 1000.0, uvWorldPosY * 1000.0) * 10.0 + PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 20.0 + PerlinNoise2D(uvWorldPosX * 10.0, uvWorldPosY * 10.0) * 10.0;
+  float pnoise = PerlinNoise2D(uvWorldPosX * 1000.0, uvWorldPosY * 1000.0) * 40.0 + PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 20.0 + PerlinNoise2D(uvWorldPosX * 10.0, uvWorldPosY * 10.0) * 10.0;
 
 	for (float dist = 0.0; dist < MAX_BLADE_LENGTH; ++dist) {
 		// Sample the wind
-		float wind = wind(vec2(uvWorldPosX, uvWorldPosY) / SCREEN_PIXEL_SIZE, time, pnoise);
+		float wind = pnoise;
 
 		// Get the height of the balde originating at the current pixel
 		// (0 means no blade)
@@ -270,16 +270,16 @@ void main() {
 		if (blade_length > 0.0) {
 			// Blades are pressed down by the wind
 			if (wind > 0.5) {
-				blade_length -= 1.0;
+				blade_length -= 2.0;
 			}
 
 			// Color basec on distance from root
 			if (abs(dist - blade_length) < 1.0) {
 				// Color grass tips
 				if (wind <= 0.5) {
-          COLOR = tip_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * 0.01;
-				} else {
-					COLOR = wind_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * 0.02;
+          COLOR = tip_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
+				} else  {
+					COLOR = wind_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
 				}
 
 				// Add the cloud shadow

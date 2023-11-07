@@ -10,8 +10,10 @@ import Icy from "../components/Icy";
 import Sprite from "../components/Sprite";
 import sprites from "../resources/sprites";
 import animations from "../resources/animations";
+import Velocity from "../components/Velocity";
+import { TILE_HEIGHT, TILE_WIDTH } from "./spriteRenderingSystem";
 
-const inputQuery = defineQuery([Destination, Input, Sprite]);
+const inputQuery = defineQuery([Velocity, Input, Sprite]);
 const collidableQuery = defineQuery([Collidable, Position]);
 const pushableQuery = defineQuery([Pushable, Position]);
 const mapQuery = defineQuery([Map]);
@@ -31,38 +33,56 @@ const mapMovementSystem = (world: World) => {
 
     let isInput = false;
 
+    Velocity.x[eid] = 0;
+    Velocity.y[eid] = 0;
+
     // if input was just pressed
-    if (
-      input & Direction.Up &&
-      !(lastInput & Direction.Up) &&
-      worldMap[Destination.y[eid] - 1]?.[Destination.x[eid]] === 1
-    ) {
-      Destination.y[eid] -= 1;
+    if (input & Direction.Up) {
+      Velocity.y[eid] = -1;
       isInput = true;
     }
-    if (
-      input & Direction.Down &&
-      !(lastInput & Direction.Down) &&
-      worldMap[Destination.y[eid] + 1]?.[Destination.x[eid]] === 1
-    ) {
-      Destination.y[eid] += 1;
+    if (input & Direction.Down) {
+      Velocity.y[eid] = 1;
       isInput = true;
     }
-    if (
-      input & Direction.Left &&
-      !(lastInput & Direction.Left) &&
-      worldMap[Destination.y[eid]]?.[Destination.x[eid] - 1] === 1
-    ) {
-      Destination.x[eid] -= 1;
+    if (input & Direction.Left) {
+      Velocity.x[eid] = -1;
       isInput = true;
     }
-    if (
-      input & Direction.Right &&
-      !(lastInput & Direction.Right) &&
-      worldMap[Destination.y[eid]]?.[Destination.x[eid] + 1] === 1
-    ) {
-      Destination.x[eid] += 1;
+    if (input & Direction.Right) {
+      Velocity.x[eid] = 1;
       isInput = true;
+    }
+
+    if (!isInput) {
+      Velocity.x[eid] = 0;
+      Velocity.y[eid] = 0;
+    }
+
+    // normalize velocity
+    if (Math.abs(Velocity.x[eid]) > 0 || Math.abs(Velocity.y[eid]) > 0) {
+      const mag = Math.sqrt(
+        Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]
+      );
+      Velocity.x[eid] /= mag;
+      Velocity.y[eid] /= mag;
+    }
+
+    Velocity.x[eid] *= 5;
+    Velocity.y[eid] *= 5;
+
+    Destination.x[eid] = Position.x[eid] + Math.sign(Velocity.x[eid]);
+    Destination.y[eid] = Position.y[eid] + Math.sign(Velocity.y[eid]);
+
+    // round destination to nearest multiple of TILE_SIZE
+    Destination.x[eid] = Math.round(Destination.x[eid]);
+    Destination.y[eid] = Math.round(Destination.y[eid]);
+
+    if (worldMap[Destination.y[eid]]?.[Destination.x[eid]] !== 1) {
+      Destination.x[eid] = Position.x[eid];
+      Destination.y[eid] = Position.y[eid];
+      Velocity.x[eid] = 0;
+      Velocity.y[eid] = 0;
     }
 
     const sprite = sprites.get(eid);
@@ -155,7 +175,7 @@ const mapMovementSystem = (world: World) => {
 };
 
 const resolveMapBoundaries = (eid: number, map: number[][]) => {
-  console.log(map[Destination.y[eid]]?.[Destination.x[eid]]);
+  // console.log(map[Destination.y[eid]]?.[Destination.x[eid]]);
   if (map[Destination.y[eid]]?.[Destination.x[eid]] !== 1) {
     Destination.x[eid] = Position.x[eid];
     Destination.y[eid] = Position.y[eid];
@@ -176,15 +196,19 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
       foundCollision = true;
       if (Position.x[eid] < Destination.x[eid]) {
         Destination.x[eid] -= 1;
+        Velocity.x[eid] = 0;
       }
       if (Position.x[eid] > Destination.x[eid]) {
         Destination.x[eid] += 1;
+        Velocity.x[eid] = 0;
       }
       if (Position.y[eid] < Destination.y[eid]) {
         Destination.y[eid] -= 1;
+        Velocity.y[eid] = 0;
       }
       if (Position.y[eid] > Destination.y[eid]) {
         Destination.y[eid] += 1;
+        Velocity.y[eid] = 0;
       }
     }
   }
