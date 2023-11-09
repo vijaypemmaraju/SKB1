@@ -1,25 +1,25 @@
 import { defineQuery, enterQuery, exitQuery, removeEntity } from "bitecs";
 import World from "../World";
-import sprites from "../resources/sprites";
-import SpriteComponent from "../components/Sprite";
+import gameObjects from "../resources/gameObjects";
+import GameObject from "../components/GameObject";
 import game from "../game";
 import textures from "../resources/textures";
 import Texture from "../components/Texture";
 import ConditionalDestroy from "../components/ConditionalDestroy";
 import conditionalDestroys from "../resources/conditionalDestroys";
 
-const spriteQuery = defineQuery([SpriteComponent, ConditionalDestroy]);
+const gameObjectQuery = defineQuery([GameObject, ConditionalDestroy]);
 
 const conditionalDestroySystem = (world: World) => {
-  const ents = spriteQuery(world);
+  const ents = gameObjectQuery(world);
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid);
     if (sprite) {
       conditionalDestroys.get(eid)?.forEach((conditionalDestroy) => {
         if (conditionalDestroy()) {
           sprite.destroy();
-          sprites.delete(eid);
+          gameObjects.delete(eid);
           removeEntity(world, eid);
         }
       });

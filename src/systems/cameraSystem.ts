@@ -2,13 +2,13 @@ import { defineQuery } from "bitecs";
 import World from "../World";
 import CameraTarget from "../components/CameraTarget";
 import Position from "../components/Position";
-import Sprite from "../components/Sprite";
-import sprites from "../resources/sprites";
+import GameObject from "../components/GameObject";
+import gameObjects from "../resources/gameObjects";
 import Input from "../components/Input";
 import CameraPointOfInterest from "../components/CameraPointOfInterest";
 
-const cameraPointOfInterest = defineQuery([CameraPointOfInterest, Sprite]);
-const playerQuery = defineQuery([CameraTarget, Sprite, Input]);
+const cameraPointOfInterest = defineQuery([CameraPointOfInterest, GameObject]);
+const playerQuery = defineQuery([CameraTarget, GameObject, Input]);
 
 const cameraSystem = (world: World) => {
   const ents = cameraPointOfInterest(world);
@@ -23,13 +23,13 @@ const cameraSystem = (world: World) => {
 
   let visiblePointsOfInterest = camera.cull(
     ents
-      .map((eid) => sprites.get(eid))
+      .map((eid) => gameObjects.get(eid))
       .filter(Boolean) as Phaser.GameObjects.Sprite[]
   );
 
   if (visiblePointsOfInterest.length === 0) {
     visiblePointsOfInterest = [
-      sprites.get(playerEid) as Phaser.GameObjects.Sprite,
+      gameObjects.get(playerEid) as Phaser.GameObjects.Sprite,
     ];
   }
 
@@ -45,7 +45,7 @@ const cameraSystem = (world: World) => {
   averagePosition.x /= visiblePointsOfInterest.length;
   averagePosition.y /= visiblePointsOfInterest.length;
 
-  const player = sprites.get(playerEid) as Phaser.GameObjects.Sprite;
+  const player = gameObjects.get(playerEid) as Phaser.GameObjects.Sprite;
 
   const destinationX =
     0.8 * player.x + 0.2 * averagePosition.x - camera.width / 2;

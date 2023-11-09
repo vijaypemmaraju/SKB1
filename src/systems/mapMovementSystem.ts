@@ -7,13 +7,13 @@ import Collidable from "../components/Colllidable";
 import Position from "../components/Position";
 import Pushable from "../components/Pushable";
 import Icy from "../components/Icy";
-import Sprite from "../components/Sprite";
-import sprites from "../resources/sprites";
+import GameObject from "../components/GameObject";
+import gameObjects from "../resources/gameObjects";
 import animations from "../resources/animations";
 import Velocity from "../components/Velocity";
-import { TILE_HEIGHT, TILE_WIDTH } from "./spriteRenderingSystem";
+import { TILE_HEIGHT, TILE_WIDTH } from "./gameObjectRenderingSystem";
 
-const inputQuery = defineQuery([Velocity, Input, Sprite]);
+const inputQuery = defineQuery([Velocity, Input, GameObject]);
 const collidableQuery = defineQuery([Collidable, Position]);
 const pushableQuery = defineQuery([Pushable, Position]);
 const mapQuery = defineQuery([Map]);
@@ -85,7 +85,7 @@ const mapMovementSystem = (world: World) => {
       Velocity.y[eid] = 0;
     }
 
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
 
     if (Input.direction[eid] != Direction.None) {
       if (sprite?.anims.currentAnim?.key !== "Walk") {

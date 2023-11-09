@@ -6,7 +6,7 @@ import { buildBaseEntity } from "../builders";
 import { createWorld, getAllEntities, removeEntity } from "bitecs";
 import Position from "../components/Position";
 import Velocity from "../components/Velocity";
-import sprites from "../resources/sprites";
+import gameObjects from "../resources/gameObjects";
 
 vi.mock("../game", () => ({
   default: {
@@ -37,7 +37,7 @@ describe("spriteSystem", () => {
     world.time = { delta: 1, elapsed: 0, then: 0 };
     const eid = buildBaseEntity(24, 24, 24, 13, world);
     spriteSystem(world);
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid) as GameObjects.Sprite;
     expect(sprite?.x).toBe(24);
     expect(sprite?.y).toBe(24);
     expect(sprite?.depth).toBe(0);
@@ -47,6 +47,6 @@ describe("spriteSystem", () => {
     expect(sprite?.setOrigin).toBeCalledWith(0, 0);
     removeEntity(world, eid);
     spriteSystem(world);
-    expect(sprites.get(eid)).toBeUndefined();
+    expect(gameObjects.get(eid)).toBeUndefined();
   });
 });

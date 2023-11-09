@@ -10,7 +10,7 @@ import {
 import { createWorld, getAllEntities } from "bitecs";
 import Position from "../components/Position";
 import Velocity from "../components/Velocity";
-import sprites from "../resources/sprites";
+import gameObjects from "../resources/gameObjects";
 import Texture from "../components/Texture";
 import Pushable from "../components/Pushable";
 import useStore from "../useStore";

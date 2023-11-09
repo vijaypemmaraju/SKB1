@@ -5,7 +5,7 @@ import Destination from "./components/Destination";
 import Position from "./components/Position";
 import Pushable from "./components/Pushable";
 import Rotation from "./components/Rotation";
-import Sprite from "./components/Sprite";
+import GameObject from "./components/GameObject";
 import Texture from "./components/Texture";
 import Velocity from "./components/Velocity";
 import textures from "./resources/textures";
@@ -15,6 +15,7 @@ import Input from "./components/Input";
 import Goal from "./components/Goal";
 import CameraTarget from "./components/CameraTarget";
 import CameraPointOfInterest from "./components/CameraPointOfInterest";
+import AnimatedSprite from "./components/AnimatedSprite";
 
 export const buildBaseEntity = (
   x: number,
@@ -29,7 +30,7 @@ export const buildBaseEntity = (
   addComponent(world, Velocity, eid);
   addComponent(world, Rotation, eid);
   addComponent(world, Scale, eid);
-  addComponent(world, Sprite, eid);
+  addComponent(world, GameObject, eid);
   addComponent(world, Texture, eid);
   Position.x[eid] = x;
   Position.y[eid] = y;
@@ -110,6 +111,6 @@ export const buildPlayerEntity = (
   // addComponent(world, Destination, eid);
   addComponent(world, Input, eid);
   addComponent(world, CameraTarget, eid);
-  Sprite.animated[eid] = 1;
+  addComponent(world, AnimatedSprite, eid);
   return eid;
 };

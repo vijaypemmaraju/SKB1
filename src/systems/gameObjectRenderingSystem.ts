@@ -4,15 +4,16 @@ import Position from "../components/Position";
 import Rotation from "../components/Rotation";
 import Scale from "../components/Scale";
 import Velocity from "../components/Velocity";
-import sprites from "../resources/sprites";
-import Sprite from "../components/Sprite";
+import gameObjects from "../resources/gameObjects";
+import GameObject from "../components/GameObject";
 import Texture from "../components/Texture";
 import animations from "../resources/animations";
 import textures from "../resources/textures";
 import getCanvasPosition from "../utils/getCanvasPosition";
+import AnimatedSprite from "../components/AnimatedSprite";
 
-const spriteQuery = defineQuery([
-  Sprite,
+const gameObjectQuery = defineQuery([
+  GameObject,
   Position,
   Rotation,
   Scale,
@@ -23,15 +24,15 @@ const spriteQuery = defineQuery([
 export const TILE_WIDTH = 16;
 export const TILE_HEIGHT = 16;
 
-const spriteRenderingSystem = (world: World) => {
-  const ents = spriteQuery(world);
+const gameObjectRenderingSystem = (world: World) => {
+  const ents = gameObjectQuery(world);
   const entsSortedByDepth = ents.sort((a, b) => {
     return Position.z[a] - Position.z[b];
   });
   world.renderTexture.beginDraw();
   for (let i = 0; i < entsSortedByDepth.length; i++) {
     const eid = ents[i];
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
     if (sprite) {
       sprite.x = Position.x[eid] * TILE_WIDTH;
       sprite.y = Position.y[eid] * TILE_HEIGHT;
@@ -50,29 +51,7 @@ const spriteRenderingSystem = (world: World) => {
           Texture.frame[eid],
           screenPosition.x,
           screenPosition.y
-          // sprite.x,
-          // sprite.y
         );
-      }
-      // const text = sprite.text;
-      // if (text) {
-      //   text.x = sprite.x;
-      //   text.y = sprite.y;
-      //   text.text = sprite.depth.toString();
-      // }
-      if (Sprite.animated[eid]) {
-        const animation = animations.get(
-          eid
-        ) as Phaser.Types.Animations.PlayAnimationConfig;
-        if (animation && sprite.anims.currentAnim?.key !== animation.key) {
-          if (animation.showOnStart) {
-            sprite.play(animation);
-          } else {
-            sprite.playAfterRepeat(animation);
-          }
-        }
-      } else {
-        sprite.setFrame(Texture.frame[eid]);
       }
     }
   }
@@ -80,4 +59,4 @@ const spriteRenderingSystem = (world: World) => {
   return world;
 };
 
-export default spriteRenderingSystem;
+export default gameObjectRenderingSystem;

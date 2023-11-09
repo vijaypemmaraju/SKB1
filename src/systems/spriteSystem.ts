@@ -1,10 +1,11 @@
 import { defineQuery, enterQuery, exitQuery } from "bitecs";
 import World from "../World";
-import sprites from "../resources/sprites";
-import SpriteComponent from "../components/Sprite";
+import gameObjects from "../resources/gameObjects";
+import SpriteComponent from "../components/GameObject";
 import game from "../game";
 import textures from "../resources/textures";
 import Texture from "../components/Texture";
+import Anchor from "../components/Anchor";
 
 const spriteQuery = defineQuery([SpriteComponent]);
 
@@ -34,36 +35,23 @@ const spriteSystem = (world: World) => {
         Texture.frame[eid]
       );
     }
-    // const text = game.scene.scenes[0].add.text(
-    //   0,
-    //   0,
-    //   Texture.frame[eid].toString(),
-    //   {
-    //     fontFamily: "monospace",
-    //     fontSize: "8px",
-    //     color: "#ffffff",
-    //   }
-    // );
-    // sprite.text = text;
-    // text.depth = 1000;
-    sprites.set(eid, sprite);
+    gameObjects.set(eid, sprite);
   }
   for (let i = 0; i < exitingSprites.length; i++) {
     const eid = exitingSprites[i];
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid);
     if (sprite) {
       sprite.destroy();
-      sprites.delete(eid);
+      gameObjects.delete(eid);
     }
   }
 
   const ents = spriteQuery(world);
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
-    const sprite = sprites.get(eid);
+    const sprite = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
     if (sprite) {
-      const anchor = SpriteComponent.anchor[eid];
-      sprite.setOrigin(anchor, anchor);
+      sprite.setOrigin(Anchor.x[eid], Anchor.y[eid]);
     }
   }
 

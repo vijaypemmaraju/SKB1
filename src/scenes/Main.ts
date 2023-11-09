@@ -1,7 +1,7 @@
 import { Scene } from "phaser";
 import { addComponent, addEntity, createWorld, pipe } from "bitecs";
 import timeSystem from "../systems/timeSystem";
-import spriteRenderingSystem from "../systems/spriteRenderingSystem";
+import gameObjectRenderingSystem from "../systems/gameObjectRenderingSystem";
 import spriteSystem from "../systems/spriteSystem";
 import movementSystem from "../systems/movementSystem";
 import World from "../World";
@@ -24,6 +24,9 @@ import { GROUP_NODE_SIZES, LinkType, NodeType } from "../graphGenerator";
 import { AUTOTILE_MAPPING, BLOB_NUMBERS } from "../utils";
 import cameraSystem from "../systems/cameraSystem";
 import pushableSystem from "../systems/pushableSystem";
+import glsl from "../utils/glsl";
+import spriteAnimationSystem from "../systems/spriteAnimationSystem";
+import spriteFramingSystem from "../systems/spriteFramingSystem";
 
 export default class Main extends Scene {
   world!: World;
@@ -53,7 +56,9 @@ export default class Main extends Scene {
       movementSystem,
       goalSystem,
       cameraSystem,
-      spriteRenderingSystem,
+      spriteFramingSystem,
+      spriteAnimationSystem,
+      gameObjectRenderingSystem,
       conditionalDestroySystem
     );
 
@@ -80,7 +85,7 @@ export default class Main extends Scene {
   }
 
   create() {
-    this.sound.play("music", { loop: true });
+    // this.sound.play("music", { loop: true });
     this.anims.createFromAseprite("bunny");
     this.anims.createFromAseprite("grass");
     const rt1 = this.add.renderTexture(
@@ -120,7 +125,7 @@ export default class Main extends Scene {
 
     this.world.renderTexture = rt1;
 
-    const frag = `
+    const frag = glsl`
       #ifdef GL_ES
 precision mediump float;
 #endif

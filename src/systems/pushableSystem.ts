@@ -6,7 +6,7 @@ import Scale from "../components/Scale";
 import Velocity from "../components/Velocity";
 import Pushable from "../components/Pushable";
 import Input from "../components/Input";
-import sprites from "../resources/sprites";
+import gameObjects from "../resources/gameObjects";
 
 const movementQuery = defineQuery([Pushable, Position]);
 const playerQuery = defineQuery([Position, Input]);
@@ -32,11 +32,11 @@ const pushableSystem = (world: World) => {
   });
 
   const relevantSpritesNextToPlayer = entsNextToPlayer
-    .map((eid) => sprites.get(eid))
+    .map((eid) => gameObjects.get(eid))
     .filter(Boolean) as Phaser.GameObjects.Sprite[];
 
   const relevantSpritesNotNextToPlayer = entsNotNextToPlayer
-    .map((eid) => sprites.get(eid))
+    .map((eid) => gameObjects.get(eid))
     .filter(Boolean) as Phaser.GameObjects.Sprite[];
 
   relevantSpritesNextToPlayer.forEach((sprite) => {
@@ -47,7 +47,7 @@ const pushableSystem = (world: World) => {
     sprite.clearTint();
   });
 
-  const playerSprite = sprites.get(player) as Phaser.GameObjects.Sprite;
+  const playerSprite = gameObjects.get(player) as Phaser.GameObjects.Sprite;
 
   return world;
 };

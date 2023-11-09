@@ -243,15 +243,15 @@ const graphGenerator = () => {
       .map((link) => (link.source === node ? link.target : link.source));
 
     for (const connectedNode of connectedNodes) {
-      if (!visited.has(connectedNode)) {
-        queue.push(connectedNode);
-        depthMap[connectedNode] = depth + 1;
+      if (!visited.has(connectedNode as string)) {
+        queue.push(connectedNode as string);
+        depthMap[connectedNode as string] = depth + 1;
       }
     }
   }
 
   for (const node of nodes) {
-    node.depth = depthMap[node.id];
+    node.depth = depthMap[node.id!];
   }
 
   // we want only a single link between each depth level
