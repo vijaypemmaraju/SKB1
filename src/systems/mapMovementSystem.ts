@@ -62,7 +62,7 @@ const mapMovementSystem = (world: World) => {
     // normalize velocity
     if (Math.abs(Velocity.x[eid]) > 0 || Math.abs(Velocity.y[eid]) > 0) {
       const mag = Math.sqrt(
-        Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]
+        Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid],
       );
       Velocity.x[eid] /= mag;
       Velocity.y[eid] /= mag;
@@ -167,7 +167,7 @@ const mapMovementSystem = (world: World) => {
     while (isCollision) {
       isCollision = resolveCollisions(
         eid,
-        collidables.filter((c) => !pushed.includes(c))
+        collidables.filter((c) => !pushed.includes(c)),
       );
     }
   }
@@ -218,7 +218,7 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
 const resolveIcy = (
   eid: number,
   icys: number[],
-  collidables: number[]
+  collidables: number[],
 ): boolean => {
   let foundIcy = false;
   for (let j = 0; j < icys.length; j++) {

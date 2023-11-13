@@ -7,7 +7,6 @@ type World = IWorld & {
     elapsed: number;
     then: number;
   };
-  renderTexture: Phaser.GameObjects.RenderTexture;
   currentCamera: Phaser.Cameras.Scene2D.Camera;
   secondaryCamera: Phaser.Cameras.Scene2D.Camera;
   map: number[][];

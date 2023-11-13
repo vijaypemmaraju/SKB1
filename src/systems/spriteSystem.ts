@@ -1,13 +1,14 @@
 import { defineQuery, enterQuery, exitQuery } from "bitecs";
 import World from "../World";
 import gameObjects from "../resources/gameObjects";
-import SpriteComponent from "../components/GameObject";
+import GameObject from "../components/GameObject";
 import game from "../game";
 import textures from "../resources/textures";
 import Texture from "../components/Texture";
 import Anchor from "../components/Anchor";
+import Sprite from "../components/Sprite";
 
-const spriteQuery = defineQuery([SpriteComponent]);
+const spriteQuery = defineQuery([GameObject, Sprite]);
 
 const spriteSystem = (world: World) => {
   const enteringSprites = enterQuery(spriteQuery)(world);
@@ -19,7 +20,8 @@ const spriteSystem = (world: World) => {
       continue;
     }
     let sprite;
-    if (texture === "autotile") {
+    const renderTextureEid = Sprite.renderTexture[eid];
+    if (renderTextureEid) {
       sprite = new Phaser.GameObjects.Sprite(
         game.scene.scenes[0],
         0,

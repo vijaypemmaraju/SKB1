@@ -27,6 +27,18 @@ import pushableSystem from "../systems/pushableSystem";
 import glsl from "../utils/glsl";
 import spriteAnimationSystem from "../systems/spriteAnimationSystem";
 import spriteFramingSystem from "../systems/spriteFramingSystem";
+import GameObject from "../components/GameObject";
+import RenderTexture from "../components/RenderTexture";
+import renderTextureSystem from "../systems/renderTextureSystem";
+import { saveToTextures } from "../resources/renderTextures";
+import shaderSystem from "../systems/shaderSystem";
+import Shader from "../components/Shader";
+import shaderData from "../resources/shaderData";
+import Sprite from "../components/Sprite";
+import grass from "../resources/shaders/grass";
+import water from "../resources/shaders/water";
+import ScrollFactor from "../components/ScrollFactor";
+import Anchor from "../components/Anchor";
 
 export default class Main extends Scene {
   world!: World;
@@ -49,6 +61,8 @@ export default class Main extends Scene {
     this.pipeline = pipe(
       timeSystem,
       spriteSystem,
+      renderTextureSystem,
+      shaderSystem,
       inputSystem,
       destinationSystem,
       pushableSystem,
@@ -63,6 +77,7 @@ export default class Main extends Scene {
     );
 
     this.world = createWorld<World>();
+    this.world.currentCamera = this.cameras.main;
     this.world.time = { delta: 0, elapsed: 0, then: 0 };
 
     this.load.atlas("sheet", "sheet.png", "sheet.json");
@@ -76,7 +91,6 @@ export default class Main extends Scene {
       margin: 1,
       spacing: 1,
     });
-    this.load.glsl("water", "shaders/water.frag");
     this.load.audio("music", "skb1_1_v0.2.mp3");
     this.load.image("auto", "wangbl.png");
     this.load.image("gradient", "gradient.png");
@@ -85,31 +99,18 @@ export default class Main extends Scene {
   }
 
   create() {
+    const nullEntity = addEntity(this.world);
     // this.sound.play("music", { loop: true });
     this.anims.createFromAseprite("bunny");
     this.anims.createFromAseprite("grass");
-    const rt1 = this.add.renderTexture(
-      0,
-      0,
-      window.innerWidth,
-      window.innerHeight
-    );
-    rt1.visible = false;
-    // rt1.setOrigin(0, 0);
-    // rt1.setScrollFactor(0);
-    // rt1.flipX = true;
-    rt1.saveTexture("renderTex");
-    // const glow = rt1.postFX.addGlow(0xffffff, 2.5, 2.5, true);
-    let time = 0;
-    // this.time.addEvent({
-    //   delay: 1,
-    //   callback: () => {
-    //     // glow.innerStrength = 0.5 + Math.sin(time / 10000) * 2.5;
-    //     glow.outerStrength = 0.5 + Math.sin(time / 10000) * 2.5;
-    //     time += this.game.loop.delta;
-    //   },
-    //   loop: true,
-    // });
+
+    const rt = addEntity(this.world);
+    addComponent(this.world, GameObject, rt);
+    addComponent(this.world, RenderTexture, rt);
+    RenderTexture.width[rt] = window.innerWidth;
+    RenderTexture.height[rt] = window.innerHeight;
+
+    saveToTextures.set(rt, "renderTex");
 
     const secondaryCamera = this.cameras.add(
       this.cameras.main.x,
@@ -123,283 +124,27 @@ export default class Main extends Scene {
 
     this.world.secondaryCamera = secondaryCamera;
 
-    this.world.renderTexture = rt1;
+    // const waterShader = this.add.shader("water", 1024, 1024, 8192, 8192);
+    // waterShader.depth = -2;
 
-    const frag = glsl`
-      #ifdef GL_ES
-precision mediump float;
-#endif
-
-uniform float time;
-uniform vec2 resolution;
-uniform sampler2D gradient;
-uniform sampler2D tex;
-uniform sampler2D noise_tex;
-uniform sampler2D cloud_tex;
-uniform float wind_speed;
-uniform vec2 wind_direction;
-uniform vec4 tip_color;
-uniform vec4 wind_color;
-uniform vec2 noise_tex_size;
-uniform vec2 camera_position;
-uniform float camera_zoom;
-
-varying vec2 fragCoord;
-
-const int firstOctave = 3;
-const int octaves = 8;
-const float persistence = 0.6;
-
-#define PI 3.1415926535
-#define MAX_BLADE_LENGTH 10.0
-
-float sineWave(float T, float a, float phase, vec2 dir, vec2 pos) {
-    return a * sin(2.0 * PI / T * dot(dir, pos) + phase);
-}
-
-float noise(int x,int y)
-{
-    float fx = float(x);
-    float fy = float(y);
-
-    return 2.0 * fract(sin(dot(vec2(fx, fy) ,vec2(12.9898,78.233))) * 43758.5453) - 1.0;
-}
-
-float smoothNoise(int x,int y)
-{
-    return noise(x,y)/4.0+(noise(x+1,y)+noise(x-1,y)+noise(x,y+1)+noise(x,y-1))/8.0+(noise(x+1,y+1)+noise(x+1,y-1)+noise(x-1,y+1)+noise(x-1,y-1))/16.0;
-}
-
-float COSInterpolation(float x,float y,float n)
-{
-    float r = n*PI;
-    float f = (1.0-cos(r))*0.5;
-    return x*(1.0-f)+y*f;
-
-}
-
-float InterpolationNoise(float x, float y)
-{
-    int ix = int(x);
-    int iy = int(y);
-    float fracx = x-float(int(x));
-    float fracy = y-float(int(y));
-
-    float v1 = smoothNoise(ix,iy);
-    float v2 = smoothNoise(ix+1,iy);
-    float v3 = smoothNoise(ix,iy+1);
-    float v4 = smoothNoise(ix+1,iy+1);
-
-   	float i1 = COSInterpolation(v1,v2,fracx);
-    float i2 = COSInterpolation(v3,v4,fracx);
-
-    return COSInterpolation(i1,i2,fracy);
-
-}
-
-float PerlinNoise2D(float x,float y)
-{
-    float sum = 0.0;
-    float frequency =0.0;
-    float amplitude = 0.0;
-    for(int i=firstOctave;i<octaves + firstOctave;i++)
-    {
-        frequency = pow(2.0,float(i)) + time / 1000.0;
-        amplitude = pow(persistence,float(i)) + sin(time / 1000.0) * 0.1;
-        sum = sum + InterpolationNoise(x*frequency,y*frequency)*amplitude;
-    }
-
-    return sum;
-}
-
-vec4 sampleColor(float dist) {
-  vec2 value = vec2(dist + 0.5, 0.0) / 3.0;
-  return texture2D(gradient, value);
-}
-
-float sampleBladeLength(vec2 uv) {
-    return texture2D(tex, uv).r * MAX_BLADE_LENGTH;
-}
-
-float sampleNoise(float value, vec2 texture_pixel_size, float offset) {
-  float valueX = value / texture_pixel_size.x / noise_tex_size.x + offset;
-  // wrap value between 0 and 1
-  valueX = fract(valueX);
-  valueX = floor(valueX * 100.0) / 100.0;
-	return texture2D(noise_tex, vec2(valueX, 0.0)).r * 2.0;
-}
-
-float wind (vec2 pos, float t, float pnoise) {
-	return pnoise * (sineWave(200.0, 5.8, 4.0*wind_speed*t, normalize(wind_direction), pos)
-		   + sineWave(75.0, 2.1, 1.0*wind_speed*t, normalize(wind_direction - vec2(0.0, 0.4)), pos)
-		   + sineWave(70.0, 1.1, 0.5*wind_speed*t, normalize(wind_direction + vec2(0.4, 0.0)), pos))
-		   / 3.0;
-}
-
-void main() {
-  vec2 UV = fragCoord / resolution;
-  UV.y = 1.0 - UV.y;
-    // First, sample some 1D noise
-  vec2 SCREEN_PIXEL_SIZE = vec2(1.0 / resolution.x, 1.0 / resolution.y);
-	float noise = sampleNoise(fragCoord.x, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	float noiseY = sampleNoise(fragCoord.y, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	// Add the nose to the uv for frayed grass
-	vec2 uv = UV - vec2(0.0, noise / resolution);
-  vec2 downscaled_resolution = vec2(resolution.x / 1., resolution.y / 1.);
-
-  vec4 COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-
-	// Color the base of the grass with the first gradient color
-	if (texture2D(tex, UV).r > 0.0) {
-		COLOR = sampleColor(0.0);
-		// COLOR -= vec4(texture2D(cloud_tex, UV).rgb, 0.0);
-	} else {
-		COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-	}
-
-  float uvWorldPosX = (uv.x) + camera_position.x / resolution.x;
-  float uvWorldPosY = (uv.y) + camera_position.y / resolution.y;
-  uvWorldPosX = floor(uvWorldPosX * downscaled_resolution.x) / downscaled_resolution.x;
-  uvWorldPosY = floor(uvWorldPosY * downscaled_resolution.y) / downscaled_resolution.y;
-
-  float pnoise = PerlinNoise2D(uvWorldPosX * 1000.0, uvWorldPosY * 1000.0) * 40.0 + PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 20.0 + PerlinNoise2D(uvWorldPosX * 10.0, uvWorldPosY * 10.0) * 10.0;
-
-	for (float dist = 0.0; dist < MAX_BLADE_LENGTH; ++dist) {
-		// Sample the wind
-		float wind = pnoise;
-
-		// Get the height of the balde originating at the current pixel
-		// (0 means no blade)
-		float blade_length = sampleBladeLength(uv);
-
-		if (blade_length > 0.0) {
-			// Blades are pressed down by the wind
-			if (wind > 0.5) {
-				blade_length -= 2.0;
-			}
-
-			// Color basec on distance from root
-			if (abs(dist - blade_length) < 1.0) {
-				// Color grass tips
-				if (wind <= 0.5) {
-          COLOR = tip_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
-				} else  {
-					COLOR = wind_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
-				}
-
-				// Add the cloud shadow
-				// COLOR -= vec4(texture2D(cloud_tex, uv).rgb, 0.0);
-				break;
-			} else if (dist < blade_length) {
-				// Color grass stems
-				COLOR = sampleColor(dist);
-
-				// Add the cloud shadow
-				// COLOR -= vec4(texture2D(cloud_tex, uv).rgb, 0.0);
-			}
-		}
-
-		// Move on to the next pixel, down the blades
-		uv += vec2(0.0, SCREEN_PIXEL_SIZE.y);
-	}
-
-
-  // gl_FragColor = vec4(pnoise, pnoise, pnoise, 1.0);
-  gl_FragColor = COLOR;
-}`;
-
-    const base = new Phaser.Display.BaseShader("grassy", frag, undefined, {
-      wind_speed: { type: "1f", value: 0.01 },
-      gradient: { type: "sampler2D", value: "gradient" },
-      tex: { type: "sampler2D", value: "gradient" },
-      noise_tex: { type: "sampler2D", value: "noise" },
-      cloud_tex: { type: "sampler2D", value: "renderTex" },
-      wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
-      tip_color: {
-        type: "4f",
-        // value: { x: 0.996078, y: 0.976471, z: 0.517647, w: 1.0 },
-        value: { x: 127 / 255, y: 180 / 255, z: 100 / 255, w: 1.0 },
-      },
-      wind_color: {
-        type: "4f",
-        // value: { x: 1.0, y: 0.984314, z: 0.639216, w: 1.0 },
-        value: { x: 129 / 255, y: 178 / 255, z: 100 / 255, w: 1.0 },
-      },
-      noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
-      camera_position: {
-        type: "2f",
-        value: { x: 0, y: 0 },
-      },
-      camera_zoom: {
-        type: "1f",
-        value: 1.0,
-      },
+    const waterShader = addEntity(this.world);
+    addComponent(this.world, GameObject, waterShader);
+    addComponent(this.world, Shader, waterShader);
+    addComponent(this.world, Position, waterShader);
+    addComponent(this.world, ScrollFactor, waterShader);
+    addComponent(this.world, Anchor, waterShader);
+    Position.x[waterShader] = 0;
+    Position.y[waterShader] = 0;
+    ScrollFactor.x[waterShader] = 1;
+    ScrollFactor.y[waterShader] = 1;
+    Position.z[waterShader] = -1;
+    Shader.width[waterShader] = 8192;
+    Shader.height[waterShader] = 8192;
+    shaderData.set(waterShader, {
+      key: "water",
+      fragmentShader: water,
+      uniforms: {},
     });
-
-    const grassShader = this.add.shader(
-      base,
-      0,
-      4, // wtf why vijay
-      window.innerWidth,
-      window.innerHeight,
-      []
-    );
-    grassShader.depth = -1;
-    grassShader.setOrigin(0);
-    grassShader.setScrollFactor(0);
-    const waterShader = this.add.shader("water", 1024, 1024, 8192, 8192);
-    waterShader.depth = -2;
-    // shader.uniforms = {
-    //   time: { type: "1f", value: 0 },
-    //   resolution: {
-    //     type: "2f",
-    //     value: {
-    //       x: this.sys.game.config.width,
-    //       y: this.sys.game.config.height,
-    //     },
-    //   },
-    //   gradient: { type: "sampler2D", value: "gradient" },
-    //   tex: { type: "sampler2D", value: "gradient" },
-    //   noise_tex: { type: "sampler2D", value: "noise" },
-    //   cloud_tex: { type: "sampler2D", value: "clouds" },
-    //   wind_speed: { type: "1f", value: 1.0 },
-    //   wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
-    //   tip_color: {
-    //     type: "4f",
-    //     value: { r: 0.996078, g: 0.976471, b: 0.517647, a: 1.0 },
-    //   },
-    //   wind_color: {
-    //     type: "4f",
-    //     value: { r: 1.0, g: 0.984314, b: 0.639216, a: 1.0 },
-    //   },
-    //   noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
-    // };
-
-    // shader.setUniform("time", 0);
-    // shader.setUniform("resolution", {
-    //   x: this.sys.game.config.width,
-    //   y: this.sys.game.config.height,
-    // });
-    // shader.uniforms.wind_speed = { type: "1f", value: 1 };
-    // shader.uniforms.wind_direction = { x: 1.0, y: -1.0 };
-    // // shader.uniforms.tip_color = [0.996078, 0.976471, 0.517647, 1.0];
-    // // shader.uniforms.wind_color = [1.0, 0.984314, 0.639216, 1.0];
-    // // shader.uniforms.noise_tex_size = { x: 50.0, y: 1.0 };
-    // shader.uniforms.gradient = { type: "sampler2D", value: "gradient" };
-    // shader.uniforms.tex = { type: "sampler2D", value: "tex" };
-    // shader.uniforms.noise_tex = { type: "sampler2D", value: "noise_tex" };
-    // shader.uniforms.cloud_tex = { type: "sampler2D", value: "cloud_tex" };
-
-    // // shader.setUniform("wind_speed.value", 1.0);
-
-    grassShader.setSampler2D("gradient", "gradient", 0);
-    grassShader.setSampler2D("tex", "renderTex", 1);
-    grassShader.setSampler2D("noise_tex", "noise", 2);
-    grassShader.setSampler2D("cloud_tex", "clouds", 3);
-    // shader.setUniform("wind_speed.value", 1.0);
-    this.shader = grassShader;
-
-    // this.add.image(0, 0, "renderTex");
 
     const swipe = (this as any).rexGestures.add.swipe({
       enable: true,
@@ -629,6 +374,53 @@ void main() {
     // buildGoalEntity(7, 7, 0, world);
     // buildGoalEntity(7, 9, 0, world);
     // buildGoalEntity(7, 5, 0, world);
+
+    let shader = addEntity(this.world);
+    addComponent(this.world, GameObject, shader);
+    addComponent(this.world, Shader, shader);
+    addComponent(this.world, Position, shader);
+    addComponent(this.world, ScrollFactor, shader);
+    addComponent(this.world, Anchor, shader);
+    Anchor.x[shader] = 0;
+    Anchor.y[shader] = 0;
+    Position.x[shader] = 0;
+    Position.y[shader] = 4;
+    Position.z[shader] = -1;
+    ScrollFactor.x[shader] = 0;
+    ScrollFactor.y[shader] = 0;
+    Shader.width[shader] = window.innerWidth;
+    Shader.height[shader] = window.innerHeight;
+    shaderData.set(shader, {
+      key: "grassy",
+      fragmentShader: grass,
+      uniforms: {
+        wind_speed: { type: "1f", value: 0.01 },
+        gradient: { type: "sampler2D", value: "gradient" },
+        tex: { type: "sampler2D", value: "renderTex" },
+        noise_tex: { type: "sampler2D", value: "noise" },
+        cloud_tex: { type: "sampler2D", value: "clouds" },
+        wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
+        tip_color: {
+          type: "4f",
+          // value: { x: 0.996078, y: 0.976471, z: 0.517647, w: 1.0 },
+          value: { x: 127 / 255, y: 180 / 255, z: 100 / 255, w: 1.0 },
+        },
+        wind_color: {
+          type: "4f",
+          // value: { x: 1.0, y: 0.984314, z: 0.639216, w: 1.0 },
+          value: { x: 129 / 255, y: 178 / 255, z: 100 / 255, w: 1.0 },
+        },
+        noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
+        camera_position: {
+          type: "2f",
+          value: { x: 0, y: 0 },
+        },
+        camera_zoom: {
+          type: "1f",
+          value: 1.0,
+        },
+      },
+    });
 
     setTimeout(async () => {
       const tileData: number[][] = [];
@@ -865,6 +657,7 @@ void main() {
             world,
             "autotile"
           );
+          Sprite.renderTexture[eid] = rt;
           tileData[j] ||= [];
           tileData[j][i] = bitmask > 0 ? 1 : 0;
         }
@@ -939,53 +732,10 @@ void main() {
   }
 
   update(time: number, delta: number) {
-    // Update game objects here
-    const rt = this.world.renderTexture;
-    // const main = this.cameras.main;
-    // rt.camera.x = -main.scrollX;
-    // rt.camera.y = -main.scrollY;
-    // console.log(this.shader);
-    // this.shader.setUniform("wind_direction.value", 1.0);
-    // this.shader.flush();
-    // console.log(this.shader.getUniform("wind_direction"));
-    this.shader.setUniform(
-      "camera_position.value.x",
-      this.cameras.main.scrollX
-    );
-    this.shader.setUniform(
-      "camera_position.value.y",
-      this.cameras.main.scrollY
-    );
-    this.shader.setUniform("camera_zoom.value", this.cameras.main.zoom);
-
-    rt.clear();
-
     this.pipeline(this.world);
     this.world.currentCamera = this.cameras.main;
     if (this.input.keyboard?.checkDown(this.input.keyboard.addKey("R"), 500)) {
       this.scene.restart();
     }
-
-    // this.world.renderTexture.resize(
-    //   this.game.scale.width,
-    //   this.game.scale.height
-    // );
-
-    // const playerSprite = sprites.get(this.player);
-    // if (playerSprite && !this.isFollowing) {
-    //   const destinationX = playerSprite.x - this.cameras.main.width * 0.5;
-    //   const destinationY = playerSprite.y - this.cameras.main.height * 0.5;
-    //   this.cameras.main.scrollX +=
-    //     (destinationX - this.cameras.main.scrollX) * 0.005 * delta;
-    //   this.cameras.main.scrollY +=
-    //     (destinationY - this.cameras.main.scrollY) * 0.005 * delta;
-    //   if (
-    //     Math.abs(destinationX - this.cameras.main.scrollX) < delta * 0.1 &&
-    //     Math.abs(destinationY - this.cameras.main.scrollY) < delta * 0.1
-    //   ) {
-    //     this.isFollowing = true;
-    //     this.cameras.main.startFollow(playerSprite, true, 0.1, 0.1);
-    //   }
-    // }
   }
 }

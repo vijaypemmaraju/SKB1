@@ -33,7 +33,7 @@ const spriteAnimationSystem = (world: World) => {
     if (sprite) {
       sprite.x = Position.x[eid] * TILE_WIDTH;
       const animation = animations.get(
-        eid
+        eid,
       ) as Phaser.Types.Animations.PlayAnimationConfig;
       if (animation && sprite.anims.currentAnim?.key !== animation.key) {
         if (animation.showOnStart) {

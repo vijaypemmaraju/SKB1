@@ -16,6 +16,7 @@ import Goal from "./components/Goal";
 import CameraTarget from "./components/CameraTarget";
 import CameraPointOfInterest from "./components/CameraPointOfInterest";
 import AnimatedSprite from "./components/AnimatedSprite";
+import Sprite from "./components/Sprite";
 
 export const buildBaseEntity = (
   x: number,
@@ -23,7 +24,7 @@ export const buildBaseEntity = (
   z: number,
   frame: number,
   world: World,
-  texture: string = "sheet"
+  texture: string = "sheet",
 ): number => {
   const eid = addEntity(world);
   addComponent(world, Position, eid);
@@ -31,6 +32,7 @@ export const buildBaseEntity = (
   addComponent(world, Rotation, eid);
   addComponent(world, Scale, eid);
   addComponent(world, GameObject, eid);
+  addComponent(world, Sprite, eid);
   addComponent(world, Texture, eid);
   Position.x[eid] = x;
   Position.y[eid] = y;
@@ -55,7 +57,7 @@ export const buildIcyTileEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 3, world);
   addComponent(world, Icy, eid);
@@ -66,7 +68,7 @@ export const buildGoalEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 6, world);
   addComponent(world, Goal, eid);
@@ -78,7 +80,7 @@ export const buildStaticBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 4, world);
   addComponent(world, Destination, eid);
@@ -90,7 +92,7 @@ export const buildPushableBlockEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 2, world, "block");
   addComponent(world, Destination, eid);
@@ -104,7 +106,7 @@ export const buildPlayerEntity = (
   x: number,
   y: number,
   z: number,
-  world: World
+  world: World,
 ): number => {
   const eid = buildBaseEntity(x, y, z, 1, world, "bunny");
   addComponent(world, Collidable, eid);

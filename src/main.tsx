@@ -41,7 +41,7 @@ graph
       GROUP_NODE_SIZES[(node as NodeType).group],
       0,
       2 * Math.PI,
-      false
+      false,
     );
     ctx.fill();
   })
@@ -55,7 +55,7 @@ graph.d3Force("link")?.distance((link: LinkType) => {
   return Phaser.Math.Between(15, 125);
 });
 
-graph.d3Force('charge').strength(-100)
+graph.d3Force("charge")!.strength(-100);
 
 useStore.setState({ forceGraphInstance: graph });
 

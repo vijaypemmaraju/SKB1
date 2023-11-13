@@ -11,6 +11,9 @@ import animations from "../resources/animations";
 import textures from "../resources/textures";
 import getCanvasPosition from "../utils/getCanvasPosition";
 import AnimatedSprite from "../components/AnimatedSprite";
+import RenderTexture from "../components/RenderTexture";
+import renderTextures from "../resources/renderTextures";
+import Sprite from "../components/Sprite";
 
 const gameObjectQuery = defineQuery([
   GameObject,
@@ -21,6 +24,8 @@ const gameObjectQuery = defineQuery([
   Texture,
 ]);
 
+const renderTextureQuery = defineQuery([GameObject, RenderTexture]);
+
 export const TILE_WIDTH = 16;
 export const TILE_HEIGHT = 16;
 
@@ -29,7 +34,15 @@ const gameObjectRenderingSystem = (world: World) => {
   const entsSortedByDepth = ents.sort((a, b) => {
     return Position.z[a] - Position.z[b];
   });
-  world.renderTexture.beginDraw();
+  const renderTextureEnts = renderTextureQuery(world);
+  const renderTexturesValues = renderTextureEnts.map((eid) =>
+    renderTextures.get(eid)
+  );
+
+  renderTexturesValues.forEach((renderTexture) => {
+    renderTexture?.clear();
+    renderTexture?.beginDraw();
+  });
   for (let i = 0; i < entsSortedByDepth.length; i++) {
     const eid = ents[i];
     const sprite = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
@@ -45,9 +58,11 @@ const gameObjectRenderingSystem = (world: World) => {
       const screenPosition = getCanvasPosition(sprite, camera);
       // get screen point
       const texture = textures.get(eid);
-      if (texture === "autotile") {
-        world.renderTexture.batchDrawFrame(
-          textures.get(eid)!,
+      const renderTextureEid = Sprite.renderTexture[eid];
+      if (renderTextureEid !== undefined) {
+        const renderTexture = renderTextures.get(renderTextureEid);
+        renderTexture?.batchDrawFrame(
+          texture!,
           Texture.frame[eid],
           screenPosition.x,
           screenPosition.y
@@ -55,7 +70,9 @@ const gameObjectRenderingSystem = (world: World) => {
       }
     }
   }
-  world.renderTexture.endDraw();
+  renderTexturesValues.forEach((renderTexture) => {
+    renderTexture?.endDraw();
+  });
   return world;
 };
 

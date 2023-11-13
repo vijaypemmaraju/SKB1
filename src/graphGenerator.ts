@@ -275,7 +275,7 @@ const graphGenerator = () => {
             (otherLink.source === link.source &&
               otherLink.target === link.target) ||
             (otherLink.source === link.target &&
-              otherLink.target === link.source)
+              otherLink.target === link.source),
         ).length > 0
       );
     });

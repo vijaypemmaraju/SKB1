@@ -21,13 +21,6 @@ const inputSystem = (world: World) => {
 
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
-    // if (
-    //   Position.x[eid] === Destination.x[eid] &&
-    //   Position.y[eid] === Destination.y[eid]
-    // ) {
-    //   Input.lastDirection[eid] = Input.direction[eid];
-    //   Input.direction[eid] = 0;
-    // }
     let input = 0;
     if (up?.isDown || swipe.up) {
       input += 1;
