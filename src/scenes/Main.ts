@@ -39,6 +39,7 @@ import grass from "../resources/shaders/grass";
 import water from "../resources/shaders/water";
 import ScrollFactor from "../components/ScrollFactor";
 import Anchor from "../components/Anchor";
+import foam from "../resources/shaders/foam";
 
 export default class Main extends Scene {
   world!: World;
@@ -133,17 +134,60 @@ export default class Main extends Scene {
     addComponent(this.world, Position, waterShader);
     addComponent(this.world, ScrollFactor, waterShader);
     addComponent(this.world, Anchor, waterShader);
+    Anchor.x[waterShader] = 0;
+    Anchor.y[waterShader] = 0;
     Position.x[waterShader] = 0;
-    Position.y[waterShader] = 0;
+    Position.y[waterShader] = 4;
+    Position.z[waterShader] = -1;
     ScrollFactor.x[waterShader] = 1;
     ScrollFactor.y[waterShader] = 1;
-    Position.z[waterShader] = -1;
     Shader.width[waterShader] = 8192;
     Shader.height[waterShader] = 8192;
     shaderData.set(waterShader, {
       key: "water",
       fragmentShader: water,
-      uniforms: {},
+      uniforms: {
+        tex: { type: "sampler2D", value: "renderTex" },
+        camera_position: {
+          type: "2f",
+          value: { x: 0, y: 0 },
+        },
+        camera_zoom: {
+          type: "1f",
+          value: 1.0,
+        },
+      },
+    });
+
+    const foamShader = addEntity(this.world);
+    addComponent(this.world, GameObject, foamShader);
+    addComponent(this.world, Shader, foamShader);
+    addComponent(this.world, Position, foamShader);
+    addComponent(this.world, ScrollFactor, foamShader);
+    addComponent(this.world, Anchor, foamShader);
+    Anchor.x[foamShader] = 0;
+    Anchor.y[foamShader] = 0;
+    Position.x[foamShader] = 0;
+    Position.y[foamShader] = 4;
+    Position.z[foamShader] = -1;
+    ScrollFactor.x[foamShader] = 0;
+    ScrollFactor.y[foamShader] = 0;
+    Shader.width[foamShader] = window.innerWidth;
+    Shader.height[foamShader] = window.innerHeight;
+    shaderData.set(foamShader, {
+      key: "water",
+      fragmentShader: foam,
+      uniforms: {
+        tex: { type: "sampler2D", value: "renderTex" },
+        camera_position: {
+          type: "2f",
+          value: { x: 0, y: 0 },
+        },
+        camera_zoom: {
+          type: "1f",
+          value: 1.0,
+        },
+      },
     });
 
     const swipe = (this as any).rexGestures.add.swipe({
