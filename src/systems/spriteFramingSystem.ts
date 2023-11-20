@@ -30,6 +30,9 @@ const spriteFramingSystem = (world: World) => {
   for (let i = 0; i < ents.length; i++) {
     const eid = ents[i];
     const gameObject = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
+    if (!gameObject) {
+      continue;
+    }
     gameObject.setFrame(Texture.frame[eid]);
   }
   return world;

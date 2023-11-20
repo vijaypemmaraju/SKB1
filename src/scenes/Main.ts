@@ -40,6 +40,7 @@ import water from "../resources/shaders/water";
 import ScrollFactor from "../components/ScrollFactor";
 import Anchor from "../components/Anchor";
 import foam from "../resources/shaders/foam";
+import interactibleSystem from "../systems/interactibleSystem";
 
 export default class Main extends Scene {
   world!: World;
@@ -65,10 +66,11 @@ export default class Main extends Scene {
       renderTextureSystem,
       shaderSystem,
       inputSystem,
-      destinationSystem,
+      interactibleSystem,
       pushableSystem,
-      mapMovementSystem,
       movementSystem,
+      mapMovementSystem,
+      destinationSystem,
       goalSystem,
       cameraSystem,
       spriteFramingSystem,
@@ -733,7 +735,7 @@ export default class Main extends Scene {
       const { x: startX, y: startY } = randomPositionOnMap();
       this.player = buildPlayerEntity(startX, startY, 3, world);
 
-      while (positions.length < 3) {
+      while (positions.length < 9) {
         const { x, y } = randomPositionOnMap();
         if (
           positions.filter(

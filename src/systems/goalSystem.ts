@@ -1,10 +1,11 @@
-import { defineQuery, removeComponent } from "bitecs";
+import { defineQuery, removeComponent, removeEntity } from "bitecs";
 import World from "../World";
 import Position from "../components/Position";
 import Goal from "../components/Goal";
 import Pushable from "../components/Pushable";
 import Texture from "../components/Texture";
 import useStore from "../useStore";
+import Interactible from "../components/Interactible";
 
 const goalQuery = defineQuery([Position, Goal]);
 const pushableQuery = defineQuery([Position, Pushable]);
@@ -26,11 +27,13 @@ const goalSystem = (world: World) => {
       goals.some(
         (gid) =>
           Position.x[gid] === Position.x[pid] &&
-          Position.y[gid] === Position.y[pid],
+          Position.y[gid] === Position.y[pid]
       )
     ) {
       removeComponent(world, Pushable, pid);
-      Texture.frame[pid] = 7;
+      removeEntity(world, Interactible.cursor[pid]);
+      removeComponent(world, Interactible, pid);
+      Texture.frame[pid] = 2;
     }
   }
   return world;

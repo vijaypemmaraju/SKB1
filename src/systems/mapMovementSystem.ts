@@ -36,55 +36,37 @@ const mapMovementSystem = (world: World) => {
     Velocity.x[eid] = 0;
     Velocity.y[eid] = 0;
 
+    const shouldCheckExclusiveInput = pushables.length > 0;
+
+    let isUp = !!(input & Direction.Up);
+    let isDown = !!(input & Direction.Down);
+    let isLeft = !!(input & Direction.Left);
+    let isRight = !!(input & Direction.Right);
+
+    if (shouldCheckExclusiveInput) {
+      isUp = isUp && !(lastInput & Direction.Up);
+      isDown = isDown && !(lastInput & Direction.Down);
+      isLeft = isLeft && !(lastInput & Direction.Left);
+      isRight = isRight && !(lastInput & Direction.Right);
+    }
+
     // if input was just pressed
-    if (input & Direction.Up) {
+    if (isUp) {
       Velocity.y[eid] = -1;
       isInput = true;
     }
-    if (input & Direction.Down) {
+    if (isDown) {
       Velocity.y[eid] = 1;
       isInput = true;
     }
-    if (input & Direction.Left) {
+    if (isLeft) {
       Velocity.x[eid] = -1;
       isInput = true;
     }
-    if (input & Direction.Right) {
+    if (isRight) {
       Velocity.x[eid] = 1;
       isInput = true;
     }
-
-    if (!isInput) {
-      Velocity.x[eid] = 0;
-      Velocity.y[eid] = 0;
-    }
-
-    // normalize velocity
-    if (Math.abs(Velocity.x[eid]) > 0 || Math.abs(Velocity.y[eid]) > 0) {
-      const mag = Math.sqrt(
-        Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid],
-      );
-      Velocity.x[eid] /= mag;
-      Velocity.y[eid] /= mag;
-    }
-
-    Velocity.x[eid] *= 5;
-    Velocity.y[eid] *= 5;
-
-    Destination.x[eid] = Position.x[eid] + Math.sign(Velocity.x[eid]);
-    Destination.y[eid] = Position.y[eid] + Math.sign(Velocity.y[eid]);
-
-    // round destination to nearest multiple of TILE_SIZE
-    Destination.x[eid] = Math.round(Destination.x[eid]);
-    Destination.y[eid] = Math.round(Destination.y[eid]);
-
-    if (worldMap[Destination.y[eid]]?.[Destination.x[eid]] !== 1) {
-      Destination.x[eid] = Position.x[eid];
-      Destination.y[eid] = Position.y[eid];
-      Velocity.x[eid] = 0;
-      Velocity.y[eid] = 0;
-    }
-
     const sprite = gameObjects.get(eid) as Phaser.GameObjects.Sprite;
 
     if (Input.direction[eid] != Direction.None) {
@@ -107,6 +89,61 @@ const mapMovementSystem = (world: World) => {
     }
 
     if (!isInput) {
+      if (pushables.length === 0) {
+        Destination.x[eid] = Position.x[eid];
+        Destination.y[eid] = Position.y[eid];
+        Velocity.x[eid] = 0;
+        Velocity.y[eid] = 0;
+      }
+      return world;
+    }
+
+    // // normalize velocity
+    // if (Math.abs(Velocity.x[eid]) > 0 || Math.abs(Velocity.y[eid]) > 0) {
+    //   const mag = Math.sqrt(
+    //     Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]
+    //   );
+    //   Velocity.x[eid] /= mag;
+    //   Velocity.y[eid] /= mag;
+    // }
+
+    Destination.x[eid] = Position.x[eid] + Math.sign(Velocity.x[eid]);
+    Destination.y[eid] = Position.y[eid] + Math.sign(Velocity.y[eid]);
+
+    // round destination to nearest multiple of TILE_SIZE
+    const mapPosition = {
+      x: Math.round(Destination.x[eid]),
+      y: Math.round(Destination.y[eid]),
+    };
+    // if (Velocity.x[eid] > 0) {
+    //   Destination.x[eid] = Math.ceil(Destination.x[eid]);
+    // }
+
+    // if (Velocity.x[eid] < 0) {
+    //   Destination.x[eid] = Math.floor(Destination.x[eid]);
+    // }
+
+    // if (Velocity.y[eid] > 0) {
+    //   Destination.y[eid] = Math.ceil(Destination.y[eid]);
+    // }
+
+    // if (Velocity.y[eid] < 0) {
+    //   Destination.y[eid] = Math.floor(Destination.y[eid]);
+    // }
+
+    // if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) {
+    //   Destination.x[eid] = Math.round(Destination.x[eid]);
+    //   Destination.y[eid] = Math.round(Destination.y[eid]);
+    // }
+
+    if (worldMap[mapPosition.y]?.[mapPosition.x] !== 1) {
+      Destination.x[eid] = Position.x[eid];
+      Destination.y[eid] = Position.y[eid];
+      Velocity.x[eid] = 0;
+      Velocity.y[eid] = 0;
+    }
+
+    if (!isInput) {
       continue;
     }
 
@@ -114,20 +151,17 @@ const mapMovementSystem = (world: World) => {
 
     for (let j = 0; j < pushables.length; j++) {
       const pid = pushables[j];
-      if (
-        Position.x[pid] === Destination.x[eid] &&
-        Position.y[pid] === Destination.y[eid]
-      ) {
-        if (input & Direction.Up) {
+      if (true) {
+        if (input & Direction.Up && !(lastInput & Direction.Up)) {
           Destination.y[pid] -= 1;
         }
-        if (input & Direction.Down) {
+        if (input & Direction.Down && !(lastInput & Direction.Down)) {
           Destination.y[pid] += 1;
         }
-        if (input & Direction.Left) {
+        if (input & Direction.Left && !(lastInput & Direction.Left)) {
           Destination.x[pid] -= 1;
         }
-        if (input & Direction.Right) {
+        if (input & Direction.Right && !(lastInput & Direction.Right)) {
           Destination.x[pid] += 1;
         }
 
@@ -167,7 +201,7 @@ const mapMovementSystem = (world: World) => {
     while (isCollision) {
       isCollision = resolveCollisions(
         eid,
-        collidables.filter((c) => !pushed.includes(c)),
+        collidables.filter((c) => !pushed.includes(c))
       );
     }
   }
@@ -175,8 +209,12 @@ const mapMovementSystem = (world: World) => {
 };
 
 const resolveMapBoundaries = (eid: number, map: number[][]) => {
-  // console.log(map[Destination.y[eid]]?.[Destination.x[eid]]);
-  if (map[Destination.y[eid]]?.[Destination.x[eid]] !== 1) {
+  const mapPosition = {
+    x: Math.round(Destination.x[eid]),
+    y: Math.round(Destination.y[eid]),
+  };
+
+  if (map[mapPosition.y]?.[mapPosition.x] !== 1) {
     Destination.x[eid] = Position.x[eid];
     Destination.y[eid] = Position.y[eid];
   }
@@ -184,32 +222,60 @@ const resolveMapBoundaries = (eid: number, map: number[][]) => {
 
 const resolveCollisions = (eid: number, collidables: number[]): boolean => {
   let foundCollision = false;
+
+  const left = Position.x[eid];
+  const top = Position.y[eid];
+  const right = Position.x[eid] + 1;
+  const bottom = Position.y[eid] + 1;
+  const centerX = Position.x[eid] + 0.5;
+  const centerY = Position.y[eid] + 0.5;
+  const detectionWidth = 0.9;
+
   for (let i = 0; i < collidables.length; i++) {
     const cid = collidables[i];
     if (cid === eid) {
       continue;
     }
+
+    const left2 = Position.x[cid];
+    const top2 = Position.y[cid];
+    const right2 = Position.x[cid] + 1;
+    const bottom2 = Position.y[cid] + 1;
+
     if (
-      Destination.x[cid] === Destination.x[eid] &&
-      Destination.y[cid] === Destination.y[eid]
+      left < right2 &&
+      left + detectionWidth > right2 &&
+      centerY > top2 &&
+      centerY < bottom2
     ) {
-      foundCollision = true;
-      if (Position.x[eid] < Destination.x[eid]) {
-        Destination.x[eid] -= 1;
-        Velocity.x[eid] = 0;
-      }
-      if (Position.x[eid] > Destination.x[eid]) {
-        Destination.x[eid] += 1;
-        Velocity.x[eid] = 0;
-      }
-      if (Position.y[eid] < Destination.y[eid]) {
-        Destination.y[eid] -= 1;
-        Velocity.y[eid] = 0;
-      }
-      if (Position.y[eid] > Destination.y[eid]) {
-        Destination.y[eid] += 1;
-        Velocity.y[eid] = 0;
-      }
+      Destination.x[eid] = left2 + 1;
+    }
+
+    if (
+      right > left2 &&
+      right - detectionWidth < left2 &&
+      centerY > top2 &&
+      centerY < bottom2
+    ) {
+      Destination.x[eid] = left2 - 1;
+    }
+
+    if (
+      top < bottom2 &&
+      top + detectionWidth > bottom2 &&
+      centerX > left2 &&
+      centerX < right2
+    ) {
+      Destination.y[eid] = top2 + 1;
+    }
+
+    if (
+      bottom > top2 &&
+      bottom - detectionWidth < top2 &&
+      centerX > left2 &&
+      centerX < right2
+    ) {
+      Destination.y[eid] = top2 - 1;
     }
   }
   return foundCollision;
@@ -218,7 +284,7 @@ const resolveCollisions = (eid: number, collidables: number[]): boolean => {
 const resolveIcy = (
   eid: number,
   icys: number[],
-  collidables: number[],
+  collidables: number[]
 ): boolean => {
   let foundIcy = false;
   for (let j = 0; j < icys.length; j++) {

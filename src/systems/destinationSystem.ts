@@ -1,14 +1,15 @@
-import { defineQuery } from "bitecs";
+import { defineQuery, hasComponent } from "bitecs";
 import World from "../World";
 import Position from "../components/Position";
 import Rotation from "../components/Rotation";
 import Scale from "../components/Scale";
 import Velocity from "../components/Velocity";
 import Destination from "../components/Destination";
+import Input from "../components/Input";
 
 const destinationQuery = defineQuery([Position, Destination, Velocity]);
 
-const SPEED = 8;
+const SPEED = 5;
 
 const destinationSystem = (world: World) => {
   const {
@@ -20,6 +21,15 @@ const destinationSystem = (world: World) => {
     const dx = Destination.x[eid] - Position.x[eid];
     const dy = Destination.y[eid] - Position.y[eid];
     const dist = Math.sqrt(dx * dx + dy * dy);
+    // if (hasComponent(world, Input, eid)) {
+    //   console.log(
+    //     Position.x[eid],
+    //     Position.y[eid],
+    //     Destination.x[eid],
+    //     Destination.y[eid],
+    //     dist
+    //   );
+    // }
     if (dist < delta * SPEED) {
       Position.x[eid] = Destination.x[eid];
       Position.y[eid] = Destination.y[eid];
