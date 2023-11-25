@@ -9,7 +9,7 @@ type World = IWorld & {
   };
   currentCamera: Phaser.Cameras.Scene2D.Camera;
   secondaryCamera: Phaser.Cameras.Scene2D.Camera;
-  map: number[][];
+  map: (number | undefined)[][];
 };
 
 export default World;

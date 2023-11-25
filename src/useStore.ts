@@ -13,4 +13,6 @@ const useStore = create<Store>(() => ({
   forceGraphInstance: null,
 }));
 
+window.useStore = useStore;
+
 export default useStore;

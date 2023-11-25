@@ -24,7 +24,7 @@ const cameraSystem = (world: World) => {
   let visiblePointsOfInterest = camera.cull(
     ents
       .map((eid) => gameObjects.get(eid))
-      .filter(Boolean) as Phaser.GameObjects.Sprite[],
+      .filter(Boolean) as Phaser.GameObjects.Sprite[]
   );
 
   if (visiblePointsOfInterest.length === 0) {
@@ -35,22 +35,27 @@ const cameraSystem = (world: World) => {
 
   const averagePosition = visiblePointsOfInterest.reduce(
     (acc, sprite) => {
-      acc.x += sprite.x;
-      acc.y += sprite.y;
+      const center = sprite.getCenter();
+      if (!center.x || !center.y) {
+        return acc;
+      }
+      acc.x += center.x;
+      acc.y += center.y;
       return acc;
     },
-    { x: 0, y: 0 },
+    { x: 0, y: 0 }
   );
 
   averagePosition.x /= visiblePointsOfInterest.length;
   averagePosition.y /= visiblePointsOfInterest.length;
 
   const player = gameObjects.get(playerEid) as Phaser.GameObjects.Sprite;
+  const center = player.getCenter();
 
   const destinationX =
-    0.8 * player.x + 0.2 * averagePosition.x - camera.width / 2;
+    0.8 * center.x! + 0.2 * averagePosition.x - camera.width / 2;
   const destinationY =
-    0.8 * player.y + 0.2 * averagePosition.y - camera.height / 2;
+    0.8 * center.y! + 0.2 * averagePosition.y - camera.height / 2;
 
   const velocity = {
     x: destinationX - camera.scrollX,
@@ -58,7 +63,7 @@ const cameraSystem = (world: World) => {
   };
 
   const magnitude = Math.sqrt(
-    velocity.x * velocity.x + velocity.y * velocity.y,
+    velocity.x * velocity.x + velocity.y * velocity.y
   );
 
   // velocity.x = magnitude;

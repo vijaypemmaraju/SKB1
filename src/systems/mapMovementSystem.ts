@@ -95,92 +95,59 @@ const mapMovementSystem = (world: World) => {
         Velocity.x[eid] = 0;
         Velocity.y[eid] = 0;
       }
-      return world;
+    } else {
+      Destination.x[eid] = Position.x[eid] + Math.sign(Velocity.x[eid]);
+      Destination.y[eid] = Position.y[eid] + Math.sign(Velocity.y[eid]);
+
+      if (pushables.length > 0) {
+        Destination.x[eid] = Math.round(Destination.x[eid]);
+        Destination.y[eid] = Math.round(Destination.y[eid]);
+      }
     }
 
-    // // normalize velocity
-    // if (Math.abs(Velocity.x[eid]) > 0 || Math.abs(Velocity.y[eid]) > 0) {
-    //   const mag = Math.sqrt(
-    //     Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]
-    //   );
-    //   Velocity.x[eid] /= mag;
-    //   Velocity.y[eid] /= mag;
-    // }
-
-    Destination.x[eid] = Position.x[eid] + Math.sign(Velocity.x[eid]);
-    Destination.y[eid] = Position.y[eid] + Math.sign(Velocity.y[eid]);
-
-    // round destination to nearest multiple of TILE_SIZE
     const mapPosition = {
-      x: Math.round(Destination.x[eid]),
-      y: Math.round(Destination.y[eid]),
+      x: Math.floor(Destination.x[eid] + 0.5),
+      y: Math.floor(Destination.y[eid] + 0.5),
     };
+
     // if (Velocity.x[eid] > 0) {
-    //   Destination.x[eid] = Math.ceil(Destination.x[eid]);
-    // }
-
-    // if (Velocity.x[eid] < 0) {
-    //   Destination.x[eid] = Math.floor(Destination.x[eid]);
-    // }
-
-    // if (Velocity.y[eid] > 0) {
-    //   Destination.y[eid] = Math.ceil(Destination.y[eid]);
-    // }
-
-    // if (Velocity.y[eid] < 0) {
-    //   Destination.y[eid] = Math.floor(Destination.y[eid]);
-    // }
-
-    // if (Velocity.x[eid] === 0 && Velocity.y[eid] === 0) {
-    //   Destination.x[eid] = Math.round(Destination.x[eid]);
-    //   Destination.y[eid] = Math.round(Destination.y[eid]);
-    // }
-
-    if (worldMap[mapPosition.y]?.[mapPosition.x] !== 1) {
-      Destination.x[eid] = Position.x[eid];
-      Destination.y[eid] = Position.y[eid];
-      Velocity.x[eid] = 0;
-      Velocity.y[eid] = 0;
-    }
 
     if (!isInput) {
       continue;
     }
 
+    resolveMapBoundaries(eid, world.map);
+
     const pushed: number[] = [];
 
     for (let j = 0; j < pushables.length; j++) {
       const pid = pushables[j];
-      if (true) {
-        if (input & Direction.Up && !(lastInput & Direction.Up)) {
-          Destination.y[pid] -= 1;
-        }
-        if (input & Direction.Down && !(lastInput & Direction.Down)) {
-          Destination.y[pid] += 1;
-        }
-        if (input & Direction.Left && !(lastInput & Direction.Left)) {
-          Destination.x[pid] -= 1;
-        }
-        if (input & Direction.Right && !(lastInput & Direction.Right)) {
-          Destination.x[pid] += 1;
-        }
 
-        if (resolveCollisions(pid, collidables)) {
-          continue;
-        }
+      if (
+        Destination.x[eid] ===
+          mapPosition.x + Pushable.distanceFromPlayerX[pid] &&
+        Destination.y[eid] === mapPosition.y + Pushable.distanceFromPlayerY[pid]
+      ) {
+        continue;
+      }
+      Destination.x[pid] = mapPosition.x + Pushable.distanceFromPlayerX[pid];
+      Destination.y[pid] = mapPosition.y + Pushable.distanceFromPlayerY[pid];
 
-        let isIcy = true;
-        while (isIcy) {
-          isIcy = resolveIcy(pid, icies, collidables);
-        }
-        resolveMapBoundaries(pid, world.map);
+      if (resolveCollisions(pid, collidables)) {
+        continue;
+      }
 
-        if (
-          Position.x[pid] !== Destination.x[pid] ||
-          Position.y[pid] !== Destination.y[pid]
-        ) {
-          pushed.push(pid);
-        }
+      let isIcy = true;
+      while (isIcy) {
+        isIcy = resolveIcy(pid, icies, collidables);
+      }
+      resolveMapBoundaries(pid, world.map);
+
+      if (
+        Position.x[pid] !== Destination.x[pid] ||
+        Position.y[pid] !== Destination.y[pid]
+      ) {
+        pushed.push(pid);
       }
     }
 
@@ -208,15 +175,49 @@ const mapMovementSystem = (world: World) => {
   return world;
 };
 
-const resolveMapBoundaries = (eid: number, map: number[][]) => {
+const resolveMapBoundaries = (eid: number, map: (number | undefined)[][]) => {
   const mapPosition = {
-    x: Math.round(Destination.x[eid]),
-    y: Math.round(Destination.y[eid]),
+    x: Math.floor(Position.x[eid] + 0.5),
+    y: Math.floor(Position.y[eid] + 0.5),
   };
 
-  if (map[mapPosition.y]?.[mapPosition.x] !== 1) {
-    Destination.x[eid] = Position.x[eid];
-    Destination.y[eid] = Position.y[eid];
+  if (map[mapPosition.y]?.[mapPosition.x] === undefined) {
+    if (Math.abs(Velocity.x[eid]) > 0 && Math.abs(Velocity.y[eid]) > 0) {
+      let attempts = 0;
+      while (
+        map[mapPosition.y]?.[mapPosition.x] === undefined &&
+        attempts < 10
+      ) {
+        Destination.x[eid] = mapPosition.x - Math.sign(Velocity.x[eid]);
+        Destination.y[eid] = mapPosition.y - Math.sign(Velocity.y[eid]);
+        mapPosition.x = Math.floor(Destination.x[eid] + 0.5);
+        mapPosition.y = Math.floor(Destination.y[eid] + 0.5);
+        attempts++;
+      }
+
+      if (map[mapPosition.y]?.[mapPosition.x] !== undefined) {
+        return;
+      }
+    }
+
+    let shortestDistance = Infinity;
+    for (let y = 0; y < map.length; y++) {
+      if (map[y] === undefined) {
+        continue;
+      }
+      for (let x = 0; x < map[y].length; x++) {
+        if (map[y][x] !== undefined) {
+          const distance = Math.sqrt(
+            Math.pow(x - Position.x[eid], 2) + Math.pow(y - Position.y[eid], 2)
+          );
+          if (distance < shortestDistance) {
+            shortestDistance = distance;
+            Destination.x[eid] = x;
+            Destination.y[eid] = y;
+          }
+        }
+      }
+    }
   }
 };
 

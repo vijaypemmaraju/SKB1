@@ -23,7 +23,8 @@ const graph = ForceGraph()(graphElement);
 
 graph
   .graphData(data)
-  .cooldownTime(2000)
+  .warmupTicks(2000)
+  .cooldownTime(0)
   .d3AlphaDecay(0)
   .d3VelocityDecay(0)
   .height(window.innerHeight / 2)

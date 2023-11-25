@@ -26,7 +26,7 @@ const int octaves = 8;
 const float persistence = 0.6;
 
 #define PI 3.1415926535
-#define MAX_BLADE_LENGTH 10.0
+#define MAX_BLADE_LENGTH 5.0
 
 float sineWave(float T, float a, float phase, vec2 dir, vec2 pos) {
     return a * sin(2.0 * PI / T * dot(dir, pos) + phase);
@@ -125,15 +125,26 @@ void main() {
   vec4 COLOR = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// Color the base of the grass with the first gradient color
-	if (texture2D(tex, UV).r > 0.0) {
-		COLOR = sampleColor(0.0);
+	if (texture2D(tex, UV).r > 0.) {
+		COLOR = texture2D(tex, UV);
+    // // blend with 3x3 pixels around it
+    for (int i = -5; i <= 5; i++) {
+        for (int j = -5; j <= 5; j++) {
+          vec2 uv = UV + vec2(float(i) - 1.0, float(j) - 1.0) * 1.0 / resolution;
+          COLOR += texture2D(tex, uv);
+        }
+    }
+
+    COLOR /= 121.0;
 		// COLOR -= vec4(texture2D(cloud_tex, UV).rgb, 0.0);
 	} else {
 		COLOR = vec4(0.0, 0.0, 0.0, 0.0);
+    gl_FragColor = COLOR;
+    return;
 	}
 
-  float uvWorldPosX = (uv.x) + camera_position.x / resolution.x;
-  float uvWorldPosY = (uv.y) + camera_position.y / resolution.y;
+  float uvWorldPosX = (uv.x);
+  float uvWorldPosY = (uv.y);
   uvWorldPosX = floor(uvWorldPosX * downscaled_resolution.x) / downscaled_resolution.x;
   uvWorldPosY = floor(uvWorldPosY * downscaled_resolution.y) / downscaled_resolution.y;
 

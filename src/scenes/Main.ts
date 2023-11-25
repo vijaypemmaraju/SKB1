@@ -1,7 +1,10 @@
 import { Scene } from "phaser";
 import { addComponent, addEntity, createWorld, pipe } from "bitecs";
 import timeSystem from "../systems/timeSystem";
-import gameObjectRenderingSystem from "../systems/gameObjectRenderingSystem";
+import gameObjectRenderingSystem, {
+  TILE_HEIGHT,
+  TILE_WIDTH,
+} from "../systems/gameObjectRenderingSystem";
 import spriteSystem from "../systems/spriteSystem";
 import movementSystem from "../systems/movementSystem";
 import World from "../World";
@@ -140,7 +143,7 @@ export default class Main extends Scene {
     Anchor.y[waterShader] = 0;
     Position.x[waterShader] = 0;
     Position.y[waterShader] = 4;
-    Position.z[waterShader] = -1;
+    Position.z[waterShader] = -3;
     ScrollFactor.x[waterShader] = 1;
     ScrollFactor.y[waterShader] = 1;
     Shader.width[waterShader] = 8192;
@@ -148,37 +151,6 @@ export default class Main extends Scene {
     shaderData.set(waterShader, {
       key: "water",
       fragmentShader: water,
-      uniforms: {
-        tex: { type: "sampler2D", value: "renderTex" },
-        camera_position: {
-          type: "2f",
-          value: { x: 0, y: 0 },
-        },
-        camera_zoom: {
-          type: "1f",
-          value: 1.0,
-        },
-      },
-    });
-
-    const foamShader = addEntity(this.world);
-    addComponent(this.world, GameObject, foamShader);
-    addComponent(this.world, Shader, foamShader);
-    addComponent(this.world, Position, foamShader);
-    addComponent(this.world, ScrollFactor, foamShader);
-    addComponent(this.world, Anchor, foamShader);
-    Anchor.x[foamShader] = 0;
-    Anchor.y[foamShader] = 0;
-    Position.x[foamShader] = 0;
-    Position.y[foamShader] = 4;
-    Position.z[foamShader] = -1;
-    ScrollFactor.x[foamShader] = 0;
-    ScrollFactor.y[foamShader] = 0;
-    Shader.width[foamShader] = window.innerWidth;
-    Shader.height[foamShader] = window.innerHeight;
-    shaderData.set(foamShader, {
-      key: "water",
-      fragmentShader: foam,
       uniforms: {
         tex: { type: "sampler2D", value: "renderTex" },
         camera_position: {
@@ -314,6 +286,34 @@ export default class Main extends Scene {
           ease: Phaser.Math.Easing.Quadratic.InOut,
         });
         secondaryCamera.zoom = 0.3;
+      } else {
+        this.tweens.add({
+          targets: vignette,
+          radius: 0.001,
+          duration: 3000,
+        });
+        this.tweens.add({
+          targets: bloom,
+          strength: 1,
+          duration: 3000,
+        });
+        this.tweens.add({
+          targets: barrel,
+          amount: 1.1,
+          duration: 3000,
+        });
+        this.tweens.add({
+          targets: tiltShift,
+          radius: 0.8,
+          duration: 3000,
+        });
+        this.tweens.add({
+          targets: this.cameras.main,
+          zoom: 2,
+          duration: 3000,
+          ease: Phaser.Math.Easing.Quadratic.InOut,
+        });
+        secondaryCamera.zoom = 0.5;
       }
     });
 
@@ -421,58 +421,10 @@ export default class Main extends Scene {
     // buildGoalEntity(7, 9, 0, world);
     // buildGoalEntity(7, 5, 0, world);
 
-    let shader = addEntity(this.world);
-    addComponent(this.world, GameObject, shader);
-    addComponent(this.world, Shader, shader);
-    addComponent(this.world, Position, shader);
-    addComponent(this.world, ScrollFactor, shader);
-    addComponent(this.world, Anchor, shader);
-    Anchor.x[shader] = 0;
-    Anchor.y[shader] = 0;
-    Position.x[shader] = 0;
-    Position.y[shader] = 4;
-    Position.z[shader] = -1;
-    ScrollFactor.x[shader] = 0;
-    ScrollFactor.y[shader] = 0;
-    Shader.width[shader] = window.innerWidth;
-    Shader.height[shader] = window.innerHeight;
-    shaderData.set(shader, {
-      key: "grassy",
-      fragmentShader: grass,
-      uniforms: {
-        wind_speed: { type: "1f", value: 0.01 },
-        gradient: { type: "sampler2D", value: "gradient" },
-        tex: { type: "sampler2D", value: "renderTex" },
-        noise_tex: { type: "sampler2D", value: "noise" },
-        cloud_tex: { type: "sampler2D", value: "clouds" },
-        wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
-        tip_color: {
-          type: "4f",
-          // value: { x: 0.996078, y: 0.976471, z: 0.517647, w: 1.0 },
-          value: { x: 127 / 255, y: 180 / 255, z: 100 / 255, w: 1.0 },
-        },
-        wind_color: {
-          type: "4f",
-          // value: { x: 1.0, y: 0.984314, z: 0.639216, w: 1.0 },
-          value: { x: 129 / 255, y: 178 / 255, z: 100 / 255, w: 1.0 },
-        },
-        noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
-        camera_position: {
-          type: "2f",
-          value: { x: 0, y: 0 },
-        },
-        camera_zoom: {
-          type: "1f",
-          value: 1.0,
-        },
-      },
-    });
-
     setTimeout(async () => {
-      const tileData: number[][] = [];
+      const tileData: (number | undefined)[][] = [];
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
-      console.log(data);
       const lowestX =
         Math.min(...(data?.nodes.map((n) => (n as NodeType).x!) || [])) - 200;
       const lowestY =
@@ -505,8 +457,6 @@ export default class Main extends Scene {
             } as LinkType)
         ),
       };
-
-      console.log(movedData?.links);
 
       const bounds = graph?.getGraphBbox();
       const [minX, minY, maxX, maxY] = [
@@ -545,7 +495,7 @@ export default class Main extends Scene {
             const dx = Math.floor(Math.cos(angle) * radius);
             const dy = Math.floor(Math.sin(angle) * radius);
             sparseMap[y + dy] ||= [];
-            sparseMap[y + dy][x + dx] = 1;
+            sparseMap[y + dy][x + dx] = (n as NodeType).depth || 1;
           }
         }
       }
@@ -568,21 +518,22 @@ export default class Main extends Scene {
           new Phaser.Math.Vector2(endX, endY)
         );
 
-        // console.log(bezier);
         const points = bezier.getDistancePoints(4);
 
         for (const point of points) {
           const x = point.x;
           const y = point.y;
           sparseMap[Math.floor(y)] ||= [];
-          sparseMap[Math.floor(y)][Math.floor(x)] = 1;
+          sparseMap[Math.floor(y)][Math.floor(x)] ||=
+            (l.source as NodeType).depth || 1;
           const randomRadius = Phaser.Math.FloatBetween(2, 3);
           for (let radius = 0; radius < randomRadius; radius += 0.1) {
             for (let angle = 0; angle < 360; angle += 1) {
               const dx = Math.cos(angle) * radius;
               const dy = Math.sin(angle) * radius;
               sparseMap[Math.floor(y + dy)] ||= [];
-              sparseMap[Math.floor(y + dy)][Math.floor(x + dx)] = 1;
+              sparseMap[Math.floor(y + dy)][Math.floor(x + dx)] ||=
+                (l.source as NodeType).depth || 1;
             }
           }
         }
@@ -694,20 +645,118 @@ export default class Main extends Scene {
             continue;
           }
           const index = AUTOTILE_MAPPING.indexOf(bitmask);
-          const eid = buildBaseEntity(
-            i,
-            j,
-            -1,
-            index,
-            // bitmask > 0 ? AUTOTILE_MAPPING.indexOf(255) : 0,
-            world,
-            "autotile"
-          );
-          Sprite.renderTexture[eid] = rt;
+          // const eid = buildBaseEntity(
+          //   i,
+          //   j,
+          //   1,
+          //   // index,
+          //   bitmask > 0 ? AUTOTILE_MAPPING.indexOf(255) : 0,
+          //   world,
+          //   "autotile"
+          // );
+          // if (sparseMap[j][i] === 1) {
+          //   Sprite.renderTexture[eid] = rt;
+          // }
           tileData[j] ||= [];
-          tileData[j][i] = bitmask > 0 ? 1 : 0;
+          tileData[j][i] = bitmask > 0 ? sparseMap[j][i] : undefined;
         }
       }
+
+      const textureData: string[][] = [];
+      for (let i = 0; i < scaledWidth; i++) {
+        for (let j = 0; j < scaledHeight; j++) {
+          textureData[j] ||= [];
+          if (!tileData[j]?.[i]) {
+            textureData[j][i] = ".";
+          } else {
+            textureData[j][i] = tileData[j][i]!.toString();
+          }
+        }
+      }
+
+      this.textures.generate("sparseMap", {
+        data: textureData,
+        pixelWidth: 16,
+        pixelHeight: 16,
+      });
+
+      const foamShader = addEntity(this.world);
+      addComponent(this.world, GameObject, foamShader);
+      addComponent(this.world, Shader, foamShader);
+      addComponent(this.world, Position, foamShader);
+      addComponent(this.world, ScrollFactor, foamShader);
+      addComponent(this.world, Anchor, foamShader);
+      Anchor.x[foamShader] = 0;
+      Anchor.y[foamShader] = 0;
+      Position.x[foamShader] = 0;
+      Position.y[foamShader] = 0;
+      Position.z[foamShader] = -2;
+      ScrollFactor.x[foamShader] = 1;
+      ScrollFactor.y[foamShader] = 1;
+      Shader.width[foamShader] = textureData[0].length * TILE_WIDTH;
+      Shader.height[foamShader] = textureData.length * TILE_HEIGHT;
+      shaderData.set(foamShader, {
+        key: "foam",
+        fragmentShader: foam,
+        uniforms: {
+          tex: { type: "sampler2D", value: "sparseMap" },
+          camera_position: {
+            type: "2f",
+            value: { x: 0, y: 0 },
+          },
+          camera_zoom: {
+            type: "1f",
+            value: 1.0,
+          },
+        },
+      });
+
+      let grassShader = addEntity(this.world);
+      addComponent(this.world, GameObject, grassShader);
+      addComponent(this.world, Shader, grassShader);
+      addComponent(this.world, Position, grassShader);
+      addComponent(this.world, ScrollFactor, grassShader);
+      addComponent(this.world, Anchor, grassShader);
+      Anchor.x[grassShader] = 0;
+      Anchor.y[grassShader] = 0;
+      Position.x[grassShader] = 0;
+      Position.y[grassShader] = 0;
+      Position.z[grassShader] = -1;
+      ScrollFactor.x[grassShader] = 1;
+      ScrollFactor.y[grassShader] = 1;
+      Shader.width[grassShader] = textureData[0].length * TILE_WIDTH;
+      Shader.height[grassShader] = textureData.length * TILE_HEIGHT;
+      shaderData.set(grassShader, {
+        key: "grassy",
+        fragmentShader: grass,
+        uniforms: {
+          wind_speed: { type: "1f", value: 0.01 },
+          gradient: { type: "sampler2D", value: "gradient" },
+          tex: { type: "sampler2D", value: "sparseMap" },
+          noise_tex: { type: "sampler2D", value: "noise" },
+          cloud_tex: { type: "sampler2D", value: "clouds" },
+          wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
+          tip_color: {
+            type: "4f",
+            // value: { x: 0.996078, y: 0.976471, z: 0.517647, w: 1.0 },
+            value: { x: 127 / 255, y: 180 / 255, z: 100 / 255, w: 1.0 },
+          },
+          wind_color: {
+            type: "4f",
+            // value: { x: 1.0, y: 0.984314, z: 0.639216, w: 1.0 },
+            value: { x: 129 / 255, y: 178 / 255, z: 100 / 255, w: 1.0 },
+          },
+          noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
+          camera_position: {
+            type: "2f",
+            value: { x: 0, y: 0 },
+          },
+          camera_zoom: {
+            type: "1f",
+            value: 1.0,
+          },
+        },
+      });
 
       world.map = tileData;
 
@@ -734,8 +783,12 @@ export default class Main extends Scene {
 
       const { x: startX, y: startY } = randomPositionOnMap();
       this.player = buildPlayerEntity(startX, startY, 3, world);
+      this.cameras.main.centerOn(
+        Position.x[this.player] * TILE_WIDTH,
+        Position.y[this.player] * TILE_HEIGHT
+      );
 
-      while (positions.length < 9) {
+      while (positions.length < 1) {
         const { x, y } = randomPositionOnMap();
         if (
           positions.filter(
@@ -774,7 +827,7 @@ export default class Main extends Scene {
         // Position.x[b] += 1;
         // Destination.x[b] += 1;
       });
-    }, 2500);
+    }, 0);
   }
 
   update(time: number, delta: number) {

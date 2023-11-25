@@ -30,7 +30,7 @@ const shaderSystem = (world: World) => {
       shaderDatum.key,
       shaderDatum.fragmentShader,
       undefined,
-      shaderDatum.uniforms,
+      shaderDatum.uniforms
     );
     const shader = game.scene.scenes[0].add.shader(
       base,
@@ -38,14 +38,14 @@ const shaderSystem = (world: World) => {
       Position.y[eid],
       Shader.width[eid],
       Shader.height[eid],
-      [],
+      []
     );
     shader.setOrigin(Anchor.x[eid], Anchor.y[eid]);
+    shader.setDepth(Position.z[eid]);
     shader.setScrollFactor(ScrollFactor.x[eid], ScrollFactor.y[eid]);
     const sampler2DData = Object.entries(shaderDatum.uniforms).filter(
-      ([, uniform]) => uniform.type === "sampler2D",
+      ([, uniform]) => uniform.type === "sampler2D"
     );
-    console.log(sampler2DData);
     for (let i = 0; i < sampler2DData.length; i++) {
       const [key, uniform] = sampler2DData[i];
       shader.setSampler2D(key, uniform.value, i);

@@ -112,6 +112,13 @@ const interactibleSystem = (world: World) => {
           Interactible.interacting[closestInteractible] = 0;
 
           addComponent(world, Pushable, closestInteractible);
+          Pushable.distanceFromPlayerX[closestInteractible] = Math.round(
+            Position.x[closestInteractible] - Position.x[player]
+          );
+          Pushable.distanceFromPlayerY[closestInteractible] = Math.round(
+            Position.y[closestInteractible] - Position.y[player]
+          );
+
           Interactible.interacting[closestInteractible] = 1;
           const adjacentPoints = [
             {
