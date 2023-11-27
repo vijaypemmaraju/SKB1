@@ -462,19 +462,19 @@ export default class Main extends Scene {
       };
 
       const bounds = graph?.getGraphBbox();
-      const minX = movedData?.nodes.reduce(
+      const minX = movedData?.nodes!.reduce(
         (acc, n) => Math.min(acc, n.x),
         Infinity
       );
-      const minY = movedData?.nodes.reduce(
+      const minY = movedData?.nodes!.reduce(
         (acc, n) => Math.min(acc, n.y),
         Infinity
       );
-      const maxX = movedData?.nodes.reduce(
+      const maxX = movedData?.nodes!.reduce(
         (acc, n) => Math.max(acc, n.x),
         -Infinity
       );
-      const maxY = movedData?.nodes.reduce(
+      const maxY = movedData?.nodes!.reduce(
         (acc, n) => Math.max(acc, n.y),
         -Infinity
       );

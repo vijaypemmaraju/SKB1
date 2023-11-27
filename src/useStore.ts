@@ -13,6 +13,12 @@ const useStore = create<Store>(() => ({
   forceGraphInstance: null,
 }));
 
+declare global {
+  interface Window {
+    useStore: typeof useStore;
+  }
+}
+
 window.useStore = useStore;
 
 export default useStore;
