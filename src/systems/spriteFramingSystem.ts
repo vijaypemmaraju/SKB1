@@ -11,6 +11,7 @@ import animations from "../resources/animations";
 import textures from "../resources/textures";
 import getCanvasPosition from "../utils/getCanvasPosition";
 import AnimatedSprite from "../components/AnimatedSprite";
+import Shader from "../components/Shader";
 
 const spriteQuery = defineQuery([
   GameObject,
@@ -20,6 +21,7 @@ const spriteQuery = defineQuery([
   Velocity,
   Texture,
   Not(AnimatedSprite),
+  Not(Shader),
 ]);
 
 export const TILE_WIDTH = 16;

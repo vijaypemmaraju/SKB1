@@ -4,8 +4,10 @@ import game from "../game";
 import GameObject from "../components/GameObject";
 import RenderTexture from "../components/RenderTexture";
 import renderTextures, { saveToTextures } from "../resources/renderTextures";
+import Position from "../components/Position";
+import { TILE_HEIGHT, TILE_WIDTH } from "./gameObjectRenderingSystem";
 
-const renderTextureQuery = defineQuery([GameObject, RenderTexture]);
+const renderTextureQuery = defineQuery([GameObject, Position, RenderTexture]);
 
 const renderTextureSystem = (world: World) => {
   const enteringRenderTextures = enterQuery(renderTextureQuery)(world);
@@ -14,11 +16,13 @@ const renderTextureSystem = (world: World) => {
     const eid = enteringRenderTextures[i];
     let renderTexture;
     renderTexture = game.scene.scenes[0].add.renderTexture(
-      0,
-      0,
+      Position.x[eid] * TILE_WIDTH,
+      Position.y[eid] * TILE_HEIGHT,
       RenderTexture.width[eid],
-      RenderTexture.height[eid],
+      RenderTexture.height[eid]
     );
+    renderTexture.setOrigin(0, 0);
+    // renderTexture.setScrollFactor(0, 0);
     renderTextures.set(eid, renderTexture);
     const saveToTex = saveToTextures.get(eid);
     if (saveToTex) {
@@ -39,11 +43,11 @@ const renderTextureSystem = (world: World) => {
   for (let i = 0; i < renderTextureEnts.length; i++) {
     const eid = renderTextureEnts[i];
     const renderTexture = renderTextures.get(
-      eid,
+      eid
     ) as Phaser.GameObjects.RenderTexture;
     if (renderTexture) {
       // renderTexture.clear();
-      renderTexture.resize(game.scale.width, game.scale.height);
+      // renderTexture.resize(game.scale.width, game.scale.height);
     }
   }
 

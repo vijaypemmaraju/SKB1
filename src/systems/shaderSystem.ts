@@ -32,14 +32,14 @@ const shaderSystem = (world: World) => {
       undefined,
       shaderDatum.uniforms
     );
-    const shader = game.scene.scenes[0].add.shader(
-      base,
-      Position.x[eid],
-      Position.y[eid],
-      Shader.width[eid],
-      Shader.height[eid],
-      []
-    );
+    const shader = game.scene.scenes[0].make.shader({
+      key: base,
+      width: Shader.width[eid],
+      height: Shader.height[eid],
+      add: true,
+    });
+    shader.x = Position.x[eid];
+    shader.y = Position.y[eid];
     shader.setOrigin(Anchor.x[eid], Anchor.y[eid]);
     shader.setDepth(Position.z[eid]);
     shader.setScrollFactor(ScrollFactor.x[eid], ScrollFactor.y[eid]);

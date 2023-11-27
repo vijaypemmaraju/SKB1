@@ -113,35 +113,42 @@ float wind (vec2 pos, float t, float pnoise) {
 
 void main() {
   vec2 UV = fragCoord / resolution;
-  UV.y = 1.0 - UV.y;
+  // UV = UV / (.6);
+  // UV.y = 1.0 - UV.y;
     // First, sample some 1D noise
   vec2 SCREEN_PIXEL_SIZE = vec2(1.0 / resolution.x, 1.0 / resolution.y);
+  // vec2 camera_screen_position = camera_position / resolution;
+  // UV = UV - camera_screen_position;
 	float noise = sampleNoise(fragCoord.x, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	float noiseY = sampleNoise(fragCoord.y, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	// Add the nose to the uv for frayed grass
+	// float noiseY = sampleNoise(fragCoord.y, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
+	// // Add the nose to the uv for frayed grass
 	vec2 uv = UV - vec2(0.0, noise / resolution);
   vec2 downscaled_resolution = vec2(resolution.x / 1., resolution.y / 1.);
 
   vec4 COLOR = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// Color the base of the grass with the first gradient color
-	if (texture2D(tex, UV).r > 0.) {
-		COLOR = texture2D(tex, UV);
-    // // blend with 3x3 pixels around it
-    for (int i = -5; i <= 5; i++) {
-        for (int j = -5; j <= 5; j++) {
-          vec2 uv = UV + vec2(float(i) - 1.0, float(j) - 1.0) * 1.0 / resolution;
-          COLOR += texture2D(tex, uv);
-        }
-    }
-
-    COLOR /= 121.0;
-		// COLOR -= vec4(texture2D(cloud_tex, UV).rgb, 0.0);
-	} else {
-		COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-    gl_FragColor = COLOR;
-    return;
-	}
+	// if (texture2D(tex, UV).a > 0.) {
+		// COLOR = texture2D(tex, UV);
+  //   // compute a weighted average of the surrounding pixels
+  //   // for (int radius = 1; radius <= 5; radius++) {
+  //   //   for (float angle = 0.0; angle < 2.0 * PI; angle += PI / 24.0) {
+  //   //     vec2 offset = vec2(cos(angle), sin(angle)) * float(radius) / resolution;
+  //   //     COLOR += texture2D(tex, UV + offset) * vec4(1. / float(radius), 1. / float(radius), 1. / float(radius), 1.0);
+  //   //   }
+  //   // }
+  // gl_FragColor = texture2D(tex, UV);
+  //   if (texture2D(tex, UV).r < 1.0) {
+  //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+  //     return;
+  //   }
+  // //   // COLOR = vec4(COLOR.r, 0.0, 0.0, 0.0);
+	// // 	// COLOR -= vec4(texture2D(cloud_tex, UV).rgb, 0.0);
+	// // } else {
+	// // 	COLOR = vec4(0.0, 0.0, 0.0, 0.0);
+	// // }
+  // gl_FragColor = COLOR;
+  // return;
 
   float uvWorldPosX = (uv.x);
   float uvWorldPosY = (uv.y);

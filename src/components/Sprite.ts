@@ -1,5 +1,5 @@
 import { defineComponent, Types } from "bitecs";
 
-const Sprite = defineComponent({ renderTexture: Types.eid });
+const Sprite = defineComponent();
 
 export default Sprite;

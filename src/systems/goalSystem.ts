@@ -16,11 +16,11 @@ const goalSystem = (world: World) => {
   if (goals.length === 0) {
     return world;
   }
-  if (pushables.length === 0) {
-    useStore.setState({ hasWon: true });
-  } else {
-    useStore.setState({ hasWon: false });
-  }
+  // if (pushables.length === 0) {
+  //   useStore.setState({ hasWon: true });
+  // } else {
+  //   useStore.setState({ hasWon: false });
+  // }
   for (let i = 0; i < pushables.length; i++) {
     const pid = pushables[i];
     if (

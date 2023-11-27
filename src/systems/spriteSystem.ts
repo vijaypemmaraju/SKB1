@@ -20,7 +20,7 @@ const spriteSystem = (world: World) => {
       continue;
     }
     let sprite;
-    const renderTextureEid = Sprite.renderTexture[eid];
+    const renderTextureEid = GameObject.renderTexture[eid];
     if (renderTextureEid) {
       sprite = new Phaser.GameObjects.Sprite(
         game.scene.scenes[0],

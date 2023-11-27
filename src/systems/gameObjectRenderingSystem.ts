@@ -42,6 +42,7 @@ const gameObjectRenderingSystem = (world: World) => {
   renderTexturesValues.forEach((renderTexture) => {
     renderTexture?.clear();
     renderTexture?.beginDraw();
+    renderTexture!.visible = false;
   });
   for (let i = 0; i < entsSortedByDepth.length; i++) {
     const eid = ents[i];
@@ -58,14 +59,14 @@ const gameObjectRenderingSystem = (world: World) => {
       const screenPosition = getCanvasPosition(sprite, camera);
       // get screen point
       const texture = textures.get(eid);
-      const renderTextureEid = Sprite.renderTexture[eid];
-      if (renderTextureEid !== undefined) {
+      const renderTextureEid = GameObject.renderTexture[eid];
+      if (renderTextureEid && texture && sprite.visible) {
         const renderTexture = renderTextures.get(renderTextureEid);
         renderTexture?.batchDrawFrame(
-          texture!,
-          Texture.frame[eid],
-          screenPosition.x,
-          screenPosition.y
+          texture,
+          Texture.frame[eid] || 0,
+          sprite.x,
+          sprite.y
         );
       }
     }

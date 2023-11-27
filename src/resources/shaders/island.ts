@@ -1,31 +1,33 @@
 import glsl from "../../utils/glsl";
 
-const foam = glsl`
+const island = glsl`
 #ifdef GL_ES
 precision mediump float;
 #endif
 
-
-// glslsandbox uniforms
 uniform float time;
 uniform vec2 resolution;
-
+uniform sampler2D gradient;
 uniform sampler2D tex;
+
+uniform vec2 scale;
 uniform vec2 camera_position;
 uniform float camera_zoom;
 
 varying vec2 fragCoord;
 
-// shadertoy globals
-#define iTime time
-#define iResolution resolution
+#define PI 3.1415926535
 
 
 const int firstOctave = 3;
 const int octaves = 8;
 const float persistence = 0.6;
 
-#define PI 3.1415926535
+#define MAX_BLADE_LENGTH 5.0
+
+float sineWave(float T, float a, float phase, vec2 dir, vec2 pos) {
+    return a * sin(2.0 * PI / T * dot(dir, pos) + phase);
+}
 
 float noise(int x,int y)
 {
@@ -39,7 +41,6 @@ float smoothNoise(int x,int y)
 {
     return noise(x,y)/4.0+(noise(x+1,y)+noise(x-1,y)+noise(x,y+1)+noise(x,y-1))/8.0+(noise(x+1,y+1)+noise(x+1,y-1)+noise(x-1,y+1)+noise(x-1,y-1))/16.0;
 }
-
 
 float COSInterpolation(float x,float y,float n)
 {
@@ -83,35 +84,40 @@ float PerlinNoise2D(float x,float y)
     return sum;
 }
 
-void main()
-{
-    vec2 screenUv = fragCoord / resolution;
-    // screenUv.y = 1.0 - screenUv.y;
-    vec4 texColor = texture2D(tex, screenUv);
 
-    float size = 2. ;// sin(time / 1000.) * 2. + 2.;
+void main() {
+  vec2 UV = fragCoord / resolution;
+  // UV.x *= 0.1;
+  // vec2 camera_screen_position = vec2(-1. * camera_position.x, camera_position.y) / resolution;
+  // UV = UV - camera_screen_position * 0.;
+  UV.y = 1.0 - UV.y;
+  // UV.x = 1.0 - UV.x;
 
-    for (int i = 0; i <= 2; i++) {
-        if (float(i) >= size) {
-            break;
-        }
-        for (int j = 0; j <= 2; j++) {
-            if (float(j) >= size) {
-                break;
-            }
-            // blend nearby pixels
-            vec2 uv = screenUv + vec2(float(i) - float(size) / 2., float(j) - float(size) / 2.) * 1.0 / resolution;
-            float noise = 0. ;//PerlinNoise2D(uv.x * 1., uv.y * 1.);
-            uv = uv + vec2(noise, noise) * sin(time / 1000.0) * 1.;
-            texColor += texture2D(tex, uv);
-        }
+  // vec4 COLOR = vec4(0.0, 0.0, 0.0, 1.0);
+  // gl_FragColor = COLOR;
+  // return;
+
+		vec4 COLOR = texture2D(tex, UV);
+    int count = 0;
+    float noise = PerlinNoise2D(UV.x, UV.y) * 0.2;
+    for (float radius = 1.0; radius <= 4.0; radius += 1.) {
+      for (float angle = 0.0; angle < 2.0 * PI; angle += PI / 24.0) {
+        vec2 offset = vec2(cos(angle), sin(angle)) * float(radius) / resolution;
+        COLOR += texture2D(tex, UV + offset + noise) * vec4(1. / float(radius), 1. / float(radius), 1. / float(radius), 1.0);
+        count += 1;
+      }
     }
 
-    // texColor /= 25.0;
+    COLOR /= float(count);
 
+    if (COLOR.r <= 0.1) {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+      return;
+    }
 
-    gl_FragColor = vec4(texColor.a, texColor.a, texColor.a, texColor.a);
-}
-`;
+    gl_FragColor = COLOR;
 
-export default foam;
+    return;
+}`;
+
+export default island;
