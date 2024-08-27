@@ -146,9 +146,9 @@ vec3 water(vec2 uv, vec3 cdir)
 
 void main()
 {
-    vec2 uv = fragCoord / 8.0;
+    vec2 uv = fragCoord / 512.0;
 
-    uv = floor(uv * 8.0) / 8.0;
+    // uv = floor(uv * 8.0) / 8.0;
     gl_FragColor = vec4(water(uv, vec3(0,1,0)),1);
 }
 `;

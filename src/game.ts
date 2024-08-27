@@ -1,5 +1,5 @@
 import { AUTO, Game, WEBGL } from "phaser";
-import Main from "./scenes/Main";
+import Main2 from "./scenes/Main2";
 
 const width = Math.min(512, window.innerWidth);
 const game = new Game({
@@ -8,10 +8,16 @@ const game = new Game({
   // height: window.innerHeight / 2,
   antialias: false,
   type: AUTO,
-  scene: Main,
+  scene: Main2,
   pixelArt: true,
   scale: {
     mode: Phaser.Scale.FIT,
+  },
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: true,
+    },
   },
   fps: {
     min: 5,
@@ -19,5 +25,14 @@ const game = new Game({
     forceSetTimeOut: true,
   },
 });
+
+if (import.meta.hot) {
+  import.meta.hot.accept("/src/scenes/Main2.ts", (module) => {
+    game.scene.remove("Main2");
+    const newScene = module.default as typeof Main2;
+    console.log(module);
+    game.scene.add("Main2", newScene, true);
+  });
+}
 
 export default game;

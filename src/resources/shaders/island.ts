@@ -99,8 +99,8 @@ void main() {
 
 		vec4 COLOR = texture2D(tex, UV);
     int count = 0;
-    float noise = PerlinNoise2D(UV.x, UV.y) * 0.3;
-    for (float radius = 1.0; radius <= 2.0; radius += 1.) {
+    float noise = PerlinNoise2D(UV.x, UV.y) * 0.1;
+    for (float radius = 1.0; radius <= 1.0; radius += 1.) {
       for (float angle = 0.0; angle < 2.0 * PI; angle += PI / 4.0) {
         vec2 offset = vec2(cos(angle), sin(angle)) * float(radius) / resolution;
         COLOR += texture2D(tex, UV + offset + noise) * vec4(1. / float(radius), 1. / float(radius), 1. / float(radius), 1.0);

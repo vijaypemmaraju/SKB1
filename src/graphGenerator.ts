@@ -27,6 +27,8 @@ export const GROUP_COLORS = {
   ROOM: randomColor(),
 };
 
+console.log(GROUP_COLORS);
+
 export type LinkType = LinkObject & {
   group?: "CONTAINS" | "SOLVES" | "UNLOCKS" | "LEADS_TO";
   __controlPoints?: number[];
@@ -46,6 +48,10 @@ const ROOMS = [
   "Rocky Ruins",
   "Fiery Fields",
   "Icy Island",
+  "Windy Wasteland",
+  "Stormy Sea",
+  "Muddy Mountain",
+  "Leafy Lake",
 ];
 
 const PUZZLES = [
@@ -54,6 +60,8 @@ const PUZZLES = [
   "Symbol Blocks",
   "Number Blocks",
   "Word Blocks",
+  "Shape Blocks",
+  "Picture Blocks",
 ];
 
 const PUZZLE_CLUES = {
@@ -62,6 +70,8 @@ const PUZZLE_CLUES = {
   "Symbol Blocks": ["Symbol Clue 1", "Symbol Clue 2", "Symbol Clue 3"],
   "Number Blocks": ["Number Clue 1", "Number Clue 2", "Number Clue 3"],
   "Word Blocks": ["Word Clue 1", "Word Clue 2", "Word Clue 3"],
+  "Shape Blocks": ["Shape Clue 1", "Shape Clue 2", "Shape Clue 3"],
+  "Picture Blocks": ["Picture Clue 1", "Picture Clue 2", "Picture Clue 3"],
 } as { [key in (typeof PUZZLES)[number]]: string[] };
 
 const LOCKS = ["Funny Troll", "Silly Bridge", "Big Boulder"];
@@ -82,7 +92,7 @@ const graphGenerator = () => {
     const j = Math.floor(Math.random() * (i + 1));
     [roomNames[i], roomNames[j]] = [roomNames[j], roomNames[i]];
   }
-  roomNames = roomNames.slice(0, 3);
+  // roomNames = roomNames.slice(0, 3);
 
   const puzzles = [];
 
