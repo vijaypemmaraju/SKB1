@@ -28,6 +28,7 @@ const game = new Game({
 
 if (import.meta.hot) {
   import.meta.hot.accept("/src/scenes/Main2.ts", (module) => {
+    location.reload();
     game.scene.remove("Main2");
     const newScene = module.default as typeof Main2;
     console.log(module);

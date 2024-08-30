@@ -42,6 +42,13 @@ import spriteAnimationSystem from "../systems/spriteAnimationSystem";
 import spriteFramingSystem from "../systems/spriteFramingSystem";
 import spriteSystem from "../systems/spriteSystem";
 import Scale from "../components/Scale";
+import grass from "../resources/shaders/grass";
+import Rotation from "../components/Rotation";
+import Velocity from "../components/Velocity";
+import RenderTexture from "../components/RenderTexture";
+import { saveToTextures } from "../resources/renderTextures";
+import getCanvasPosition from "../utils/getCanvasPosition";
+import { createNoise2D } from "simplex-noise";
 
 export default class Main2 extends Scene {
   world: World;
@@ -49,6 +56,15 @@ export default class Main2 extends Scene {
   player: Phaser.GameObjects.Arc;
   polygons: number[][][];
   island: number[][];
+  islandPolygon: Phaser.GameObjects.Polygon;
+  renderTexture: Phaser.GameObjects.RenderTexture;
+  grassShader: Phaser.GameObjects.Shader;
+  dynamicGrass: Phaser.Textures.DynamicTexture | null;
+  grassBladePositions: { x: number; y: number; rotation: number }[] = [];
+  dynamicGrass2: Phaser.Textures.DynamicTexture | null;
+  grassBladePositions2: { x: number; y: number; rotation: number }[] = [];
+  emitter: Phaser.GameObjects.Particles.ParticleEmitter;
+  grassParticles: Phaser.GameObjects.Particles.ParticleEmitter;
 
   constructor() {
     super({ key: "Main2" });
@@ -56,11 +72,38 @@ export default class Main2 extends Scene {
   }
 
   preload() {
-    this.load.image("grass", "grass1.png");
+    this.load.image("grass", "grass2.png");
+    this.load.audio("music", "skb1_1_v0.2.mp3");
+    this.load.image("auto", "wangbl.png");
+    this.load.image("gradient", "gradient.png");
+    this.load.image("noise", "noise.png");
+    this.load.image("clouds", "clouds.png");
+    this.renderTexture = this.add
+      .renderTexture(0, 0, this.cameras.main.width, this.cameras.main.height)
+      .setOrigin(0, 0)
+      .setScrollFactor(0, 0);
+    this.renderTexture.saveTexture("renderTex");
+    this.dynamicGrass = this.textures.addDynamicTexture(
+      "dynamic_grass",
+      this.DYNAMIC_GRASS_SIZE,
+      this.DYNAMIC_GRASS_SIZE
+    );
+    this.dynamicGrass2 = this.textures.addDynamicTexture(
+      "dynamic_grass2",
+      this.DYNAMIC_GRASS_SIZE,
+      this.DYNAMIC_GRASS_SIZE
+    );
   }
+
+  DYNAMIC_GRASS_SIZE = 512;
 
   create() {
     const nullEntity = addEntity(this.world);
+    this.grassBladePositions = [];
+    this.grassBladePositions2 = [];
+    const noise = createNoise2D();
+    const width = 64;
+    const height = 64;
 
     this.pipeline = pipe(
       timeSystem,
@@ -89,11 +132,14 @@ export default class Main2 extends Scene {
     // zoom on scroll
     this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       const zoom = this.cameras.main.zoom;
-      this.cameras.main.zoom = Phaser.Math.Clamp(
-        zoom - deltaY * 0.001,
-        0.01,
-        2
-      );
+      // this.cameras.main.zoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 0.1, 2);
+      // const newWidth = this.cameras.main.width / this.cameras.main.zoom;
+      // const newHeight = this.cameras.main.height / this.cameras.main.zoom;
+      // console.log(newWidth, newHeight);
+      // this.renderTexture.resize(newWidth, newHeight);
+      // this.grassShader.setUniform("resolution.value.x", newWidth);
+      // this.grassShader.setUniform("resolution.value.y", newHeight);
+      // this.grassShader.setDisplaySize(newWidth, newHeight);
     });
 
     // drag to pan
@@ -262,30 +308,33 @@ export default class Main2 extends Scene {
           );
         }
 
-        const graphics = this.add.graphics();
         const line = new Offset().data(ppoints).offsetLine(320).flat();
         polygons.push(line);
       }
-      console.log("polygons", polygons);
-      polygons = polygons.map((poly) => {
-        return simplify(poly.map((p) => ({ x: p[0], y: p[1] }))).map((p) => [
-          p.x,
-          p.y,
-        ]);
-      });
+      // polygons = polygons.map((poly) => {
+      //   return simplify(poly.map((p) => ({ x: p[0], y: p[1] }))).map((p) => [
+      //     p.x,
+      //     p.y,
+      //   ]);
+      // });
       let merged = new PolygonMerger(polygons as Geom).mergePolygons();
       merged = new PolygonMerger(merged[0] as Geom).mergePolygons();
 
-      console.log("merged", merged, merged.length);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 0));
       entities.forEach((e) => e.destroy());
 
       // this.add.polygon(0, 0, merged, 0xff0000).setOrigin(0, 0).setDepth(1);
       this.island = merged[0].flat();
-      const polygon = this.add
-        .polygon(0, 0, this.island, 0x00ff00)
-        .setOrigin(0, 0);
+      this.islandPolygon = new Phaser.GameObjects.Polygon(
+        this,
+        0,
+        0,
+        this.island,
+        0xffffff
+      )
+        .setOrigin(0, 0)
+        .setVisible(false);
+      this.add.existing(this.islandPolygon);
       // polygons.forEach((p) => {
       //   this.add.polygon(0, 0, p, 0x00ff00).setOrigin(0, 0);
       // });
@@ -332,92 +381,267 @@ export default class Main2 extends Scene {
           },
         },
       });
+      // GameObject.renderTexture[waterShader] = rt;
+
+      // this.add.image(0, 0, "renderTex").setOrigin(0, 0);
+
+      let grassShader = new Phaser.Display.BaseShader(
+        "grassy",
+        grass,
+        undefined,
+        {
+          resolution: {
+            type: "2f",
+            value: {
+              x: this.cameras.main.width,
+              y: this.cameras.main.height,
+            },
+          },
+          wind_speed: { type: "1f", value: 0.01 },
+          gradient: { type: "sampler2D", value: "gradient" },
+          tex: { type: "sampler2D", value: "renderTex" },
+          noise_tex: { type: "sampler2D", value: "noise" },
+          cloud_tex: { type: "sampler2D", value: "clouds" },
+          grass_tex: { type: "sampler2D", value: "grass" },
+          grass_tex2: { type: "sampler2D", value: "grass2" },
+          wind_direction: { type: "2f", value: { x: 1.0, y: -1.0 } },
+          tip_color: {
+            type: "4f",
+            // value: { x: 0.996078, y: 0.976471, z: 0.517647, w: 1.0 },
+            value: { x: 127 / 255, y: 180 / 255, z: 100 / 255, w: 1.0 },
+          },
+          wind_color: {
+            type: "4f",
+            // value: { x: 1.0, y: 0.984314, z: 0.639216, w: 1.0 },
+            value: { x: 129 / 255, y: 178 / 255, z: 100 / 255, w: 1.0 },
+          },
+          noise_tex_size: { type: "2f", value: { x: 50.0, y: 1.0 } },
+          camera_position: {
+            type: "2f",
+            value: { x: 0, y: 0 },
+          },
+          camera_zoom: {
+            type: "1f",
+            value: 1.0,
+          },
+        }
+      );
+      const shader = this.make
+        .shader({
+          key: grassShader,
+          x: 0,
+          y: 0,
+          width: this.cameras.main.width,
+          height: this.cameras.main.height,
+          add: true,
+        })
+        .setOrigin(0, 0)
+        .setScrollFactor(0, 0);
+
+      this.grassShader = shader;
+
+      shader.setSampler2D("gradient", "gradient", 0);
+      shader.setSampler2D("tex", "renderTex", 1);
+      shader.setSampler2D("noise_tex", "noise", 2);
+      shader.setSampler2D("cloud_tex", "clouds", 3);
+      shader.setSampler2D("grass_tex", "grass", 4);
+      shader.setSampler2D("grass_tex2", "grass", 5);
+      this.renderTexture.visible = false;
+      const mask = shader.createBitmapMask();
+
+      this.grassParticles = this.add
+        .particles(0, 0, "grass", {
+          scale: { min: 1, max: 1 },
+          speed: { min: 0, max: 0 },
+          rotate: {
+            onUpdate: (particle, key, value) => {
+              return (
+                (Math.sin(
+                  (particle.x +
+                    particle.y +
+                    particle.life -
+                    particle.lifeCurrent) *
+                    0.001
+                ) -
+                  0.5) *
+                10
+              );
+            },
+          },
+          lifespan: 6000000,
+        })
+        .setDepth(1)
+        .setMask(mask);
+
+      const bounds = this.islandPolygon.getBounds();
+      const polygon = new Phaser.Geom.Polygon(this.island);
+
+      let createdPoints = [] as { x: number; y: number }[];
+      // while (createdPoints.length < 10000) {
+      //   const position = {
+      //     x: Phaser.Math.Between(bounds.x, bounds.x + bounds.width),
+      //     y: Phaser.Math.Between(bounds.y, bounds.y + bounds.height),
+      //   };
+      //   if (
+      //     Phaser.Geom.Polygon.Contains(
+      //       new Phaser.Geom.Polygon(this.island),
+      //       position.x,
+      //       position.y
+      //     ) &&
+      //     movedData.nodes?.some(
+      //       (n) =>
+      //         Phaser.Math.Distance.BetweenPoints(
+      //           new Phaser.Math.Vector2(position.x, position.y),
+      //           new Phaser.Math.Vector2(n.x!, n.y!)
+      //         ) < 800
+      //     )
+      //   ) {
+      //     // this.grassParticles.explode(1, position.x, position.y);
+      //     createdPoints.push(position);
+      //   }
+      // }
     }, 0);
   }
 
   update(time: number, delta: number) {
-    this.pipeline(this.world);
-
-    const player = this.player;
-    if (player) {
-      const speed = 1;
-      const velocity = {
-        x: 0,
-        y: 0,
+    try {
+      this.pipeline(this.world);
+      if (!this.islandPolygon) return;
+      const canvasPosition = getCanvasPosition(
+        this.islandPolygon,
+        this.cameras.main
+      );
+      const cameraPosition = {
+        x: this.cameras.main.scrollX,
+        y: this.cameras.main.scrollY,
       };
-      if (this.input.keyboard?.addKey("W").isDown) {
-        velocity.y -= speed * delta;
-      }
-      if (this.input.keyboard?.addKey("S").isDown) {
-        velocity.y += speed * delta;
-      }
-      if (this.input.keyboard?.addKey("A").isDown) {
-        velocity.x -= speed * delta;
-      }
-      if (this.input.keyboard?.addKey("D").isDown) {
-        velocity.x += speed * delta;
-      }
+      this.grassShader.setUniform("camera_position.value.x", cameraPosition.x);
+      this.grassShader.setUniform("camera_position.value.y", cameraPosition.y);
+      this.grassShader.setUniform("time.value", time);
+      this.renderTexture.clear();
+      this.renderTexture.draw(
+        this.islandPolygon,
+        canvasPosition.x,
+        canvasPosition.y
+      );
 
-      for (let i = 0; i < this.island.length - 1; i++) {
-        const start = {
-          x: this.island[i][0],
-          y: this.island[i][1],
-        };
-        const end = {
-          x: this.island[i + 1][0],
-          y: this.island[i + 1][1],
-        };
+      if (time < 10000) {
+        // this.dynamicGrass?.fill(0x000000);
+        // for (let i = 0; i < this.grassBladePositions.length; i++) {
+        //   this.dynamicGrass?.stamp(
+        //     "grass",
+        //     0,
+        //     this.grassBladePositions[i].x,
+        //     this.grassBladePositions[i].y,
+        //     {
+        //       angle: this.grassBladePositions[i].rotation,
+        //     }
+        //   );
+        // }
 
-        const ray = {
-          start: { x: player.x, y: player.y },
-          end: { x: player.x + velocity.x, y: player.y + velocity.y },
-        };
-
-        const intersection = Phaser.Geom.Intersects.GetLineToLine(
-          new Phaser.Geom.Line(ray.start.x, ray.start.y, ray.end.x, ray.end.y),
-          new Phaser.Geom.Line(start.x, start.y, end.x, end.y)
-        );
-
-        if (intersection) {
-          // project player velocity onto the line
-          const vector = new Phaser.Math.Vector2(velocity.x, velocity.y);
-          const line = new Phaser.Math.Vector2(
-            end.x - start.x,
-            end.y - start.y
-          );
-          const projected = vector.project(line);
-          velocity.x = projected.x;
-          velocity.y = projected.y;
+        this.dynamicGrass2?.fill(0x000000);
+        this.dynamicGrass?.beginDraw();
+        for (let i = 0; i < this.grassBladePositions2.length; i++) {
+          // this.dynamicGrass2?.stamp(
+          //   "grass",
+          //   0,
+          //   this.grassBladePositions2[i].x,
+          //   this.grassBladePositions2[i].y,
+          //   { angle: this.grassBladePositions2[i].rotation }
+          // );
         }
+        this.dynamicGrass?.endDraw();
       }
 
-      // check if player is in water
-      const islandPolygon = new Phaser.Geom.Polygon(this.island);
-      if (!islandPolygon.contains(player.x, player.y)) {
-        // find the closest point on the polygon to the player
-        const rays = Phaser.Geom.Intersects.GetRaysFromPointToPolygon(
-          player.x,
-          player.y,
-          islandPolygon
-        );
+      const player = this.player;
+      if (player) {
+        const speed = 1;
+        const velocity = {
+          x: 0,
+          y: 0,
+        };
+        if (this.input.keyboard?.addKey("W").isDown) {
+          velocity.y -= speed * delta;
+        }
+        if (this.input.keyboard?.addKey("S").isDown) {
+          velocity.y += speed * delta;
+        }
+        if (this.input.keyboard?.addKey("A").isDown) {
+          velocity.x -= speed * delta;
+        }
+        if (this.input.keyboard?.addKey("D").isDown) {
+          velocity.x += speed * delta;
+        }
 
-        // find the closest point on the polygon to the player
-        const closest = rays.reduce(
-          (closest, ray) => {
-            const distance = Phaser.Math.Distance.BetweenPoints(
-              player,
-              new Phaser.Math.Vector2(ray.x, ray.y)
+        for (let i = 0; i < this.island.length - 1; i++) {
+          const start = {
+            x: this.island[i][0],
+            y: this.island[i][1],
+          };
+          const end = {
+            x: this.island[i + 1][0],
+            y: this.island[i + 1][1],
+          };
+
+          const ray = {
+            start: { x: player.x, y: player.y },
+            end: { x: player.x + velocity.x, y: player.y + velocity.y },
+          };
+
+          const intersection = Phaser.Geom.Intersects.GetLineToLine(
+            new Phaser.Geom.Line(
+              ray.start.x,
+              ray.start.y,
+              ray.end.x,
+              ray.end.y
+            ),
+            new Phaser.Geom.Line(start.x, start.y, end.x, end.y)
+          );
+
+          if (intersection) {
+            // project player velocity onto the line
+            const vector = new Phaser.Math.Vector2(velocity.x, velocity.y);
+            const line = new Phaser.Math.Vector2(
+              end.x - start.x,
+              end.y - start.y
             );
-            return distance < closest.distance ? { ray, distance } : closest;
-          },
-          { ray: rays[0], distance: Infinity }
-        );
-        player.x = closest.ray.x;
-        player.y = closest.ray.y;
-      }
+            const projected = vector.project(line);
+            velocity.x = projected.x;
+            velocity.y = projected.y;
+          }
+        }
 
-      player.x += velocity.x;
-      player.y += velocity.y;
+        // check if player is in water
+        const islandPolygon = new Phaser.Geom.Polygon(this.island);
+        if (!islandPolygon.contains(player.x, player.y)) {
+          // find the closest point on the polygon to the player
+          const rays = Phaser.Geom.Intersects.GetRaysFromPointToPolygon(
+            player.x,
+            player.y,
+            islandPolygon
+          );
+
+          // find the closest point on the polygon to the player
+          const closest = rays.reduce(
+            (closest, ray) => {
+              const distance = Phaser.Math.Distance.BetweenPoints(
+                player,
+                new Phaser.Math.Vector2(ray.x, ray.y)
+              );
+              return distance < closest.distance ? { ray, distance } : closest;
+            },
+            { ray: rays[0], distance: Infinity }
+          );
+          player.x = closest.ray.x;
+          player.y = closest.ray.y;
+        }
+
+        player.x += velocity.x;
+        player.y += velocity.y;
+      }
+    } catch (e) {
+      console.error(e);
+      location.reload();
     }
   }
 }

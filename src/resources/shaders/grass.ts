@@ -11,6 +11,8 @@ uniform sampler2D gradient;
 uniform sampler2D tex;
 uniform sampler2D noise_tex;
 uniform sampler2D cloud_tex;
+uniform sampler2D grass_tex;
+uniform sampler2D grass_tex2;
 uniform float wind_speed;
 uniform vec2 wind_direction;
 uniform vec4 tip_color;
@@ -26,7 +28,10 @@ const int octaves = 8;
 const float persistence = 0.6;
 
 #define PI 3.1415926535
-#define MAX_BLADE_LENGTH 5.0
+#define MAX_BLADE_LENGTH 1.0
+
+const float BLADE_WIDTH_IN_PIXELS = 4.0;
+const float BLADE_HEIGHT_IN_PIXELS = 32.0;
 
 float sineWave(float T, float a, float phase, vec2 dir, vec2 pos) {
     return a * sin(2.0 * PI / T * dot(dir, pos) + phase);
@@ -111,93 +116,144 @@ float wind (vec2 pos, float t, float pnoise) {
 		   / 3.0;
 }
 
+#define cell_amount 100
+#define period vec2(0, 4.)
+
+vec2 modulo(vec2 divident, vec2 divisor){
+	vec2 positiveDivident = mod(divident, divisor) + divisor;
+	return mod(positiveDivident, divisor);
+}
+
+vec2 random(vec2 value){
+	value = vec2( dot(value, vec2(127.1,311.7) ),
+				  dot(value, vec2(269.5,183.3) ) );
+	return -1.0 + 2.0 * fract(sin(value) * 43758.5453123);
+}
+
+float seamless_noise(vec2 uv) {
+	uv = uv * float(cell_amount);
+	vec2 cellsMinimum = floor(uv);
+	vec2 cellsMaximum = ceil(uv);
+	vec2 uv_fract = fract(uv);
+
+	cellsMinimum = modulo(cellsMinimum, period);
+	cellsMaximum = modulo(cellsMaximum, period);
+
+	vec2 blur = smoothstep(0.0, 1.0, uv_fract);
+
+	vec2 lowerLeftDirection = random(vec2(cellsMinimum.x, cellsMinimum.y));
+	vec2 lowerRightDirection = random(vec2(cellsMaximum.x, cellsMinimum.y));
+	vec2 upperLeftDirection = random(vec2(cellsMinimum.x, cellsMaximum.y));
+	vec2 upperRightDirection = random(vec2(cellsMaximum.x, cellsMaximum.y));
+
+	vec2 fraction = fract(uv);
+
+	return mix( mix( dot( lowerLeftDirection, fraction - vec2(0, 0) ),
+                     dot( lowerRightDirection, fraction - vec2(1, 0) ), blur.x),
+                mix( dot( upperLeftDirection, fraction - vec2(0, 1) ),
+                     dot( upperRightDirection, fraction - vec2(1, 1) ), blur.x), blur.y) * 0.8 + 0.5;
+}
+
+// Add these uniform variables near the top of the shader
+const float sway_strength = 0.01;
+const float sway_speed = 1.9;
+
+// Add this function before the main() function
+vec2 sway(vec2 uv, float time) {
+    float noise_value = seamless_noise(uv * 0.5);
+    float sway_offset = sin(time * sway_speed + noise_value * 10.0) * sway_strength;
+    return vec2(sway_offset, 0.0);
+}
+
+vec2 voronoi(vec2 uv) {
+  uv = uv * 10.0;
+  vec2 uv_i = floor(uv);
+  vec2 uv_f = fract(uv);
+
+  float m = 1.0;
+  vec2 m_p = vec2(0.0);
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 neighbor = vec2(float(x), float(y));
+      vec2 point = random(uv_i + neighbor);
+      vec2 diff = neighbor + point - uv_f;
+      float d = length(diff);
+      if (d < m) {
+        m = d;
+        m_p = point;
+      }
+    }
+  }
+  return vec2(m, m_p);
+}
+
 void main() {
   vec2 UV = fragCoord / resolution;
-  // UV = UV / (.6);
-  // UV.y = 1.0 - UV.y;
-    // First, sample some 1D noise
+  UV.y = 1.0 - UV.y;
+
   vec2 SCREEN_PIXEL_SIZE = vec2(1.0 / resolution.x, 1.0 / resolution.y);
-  // vec2 camera_screen_position = camera_position / resolution;
-  // UV = UV - camera_screen_position;
 	float noise = sampleNoise(fragCoord.x, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	// float noiseY = sampleNoise(fragCoord.y, SCREEN_PIXEL_SIZE, 4.0 * wind_speed * time);
-	// // Add the nose to the uv for frayed grass
 	vec2 uv = UV - vec2(0.0, noise / resolution);
   vec2 downscaled_resolution = vec2(resolution.x / 1., resolution.y / 1.);
 
-  vec4 COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-
-	// Color the base of the grass with the first gradient color
-	// if (texture2D(tex, UV).a > 0.) {
-		// COLOR = texture2D(tex, UV);
-  //   // compute a weighted average of the surrounding pixels
-  //   // for (int radius = 1; radius <= 5; radius++) {
-  //   //   for (float angle = 0.0; angle < 2.0 * PI; angle += PI / 24.0) {
-  //   //     vec2 offset = vec2(cos(angle), sin(angle)) * float(radius) / resolution;
-  //   //     COLOR += texture2D(tex, UV + offset) * vec4(1. / float(radius), 1. / float(radius), 1. / float(radius), 1.0);
-  //   //   }
-  //   // }
-  // gl_FragColor = texture2D(tex, UV);
-  //   if (texture2D(tex, UV).r < 1.0) {
-  //     gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
-  //     return;
-  //   }
-  // //   // COLOR = vec4(COLOR.r, 0.0, 0.0, 0.0);
-	// // 	// COLOR -= vec4(texture2D(cloud_tex, UV).rgb, 0.0);
-	// // } else {
-	// // 	COLOR = vec4(0.0, 0.0, 0.0, 0.0);
-	// // }
-  // gl_FragColor = COLOR;
-  // return;
 
   float uvWorldPosX = (uv.x);
   float uvWorldPosY = (uv.y);
-  uvWorldPosX = floor(uvWorldPosX * downscaled_resolution.x) / downscaled_resolution.x;
-  uvWorldPosY = floor(uvWorldPosY * downscaled_resolution.y) / downscaled_resolution.y;
+  float cameraX = camera_position.x / resolution.x;
+  float cameraY = camera_position.y / resolution.y;
+  uvWorldPosX += cameraX;
+  uvWorldPosY += cameraY;
+  uvWorldPosX = fract(uvWorldPosX);
+  uvWorldPosY = fract(uvWorldPosY);
 
-  float pnoise = PerlinNoise2D(uvWorldPosX * 1000.0, uvWorldPosY * 1000.0) * 40.0 + PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 20.0 + PerlinNoise2D(uvWorldPosX * 10.0, uvWorldPosY * 10.0) * 10.0;
+  vec2 uvWorld = vec2(uvWorldPosX, uvWorldPosY);
 
-	for (float dist = 0.0; dist < MAX_BLADE_LENGTH; ++dist) {
-		// Sample the wind
-		float wind = pnoise;
-
-		// Get the height of the balde originating at the current pixel
-		// (0 means no blade)
-		float blade_length = sampleBladeLength(uv);
-
-		if (blade_length > 0.0) {
-			// Blades are pressed down by the wind
-			if (wind > 0.5) {
-				blade_length -= 2.0;
-			}
-
-			// Color basec on distance from root
-			if (abs(dist - blade_length) < 1.0) {
-				// Color grass tips
-				if (wind <= 0.5) {
-          COLOR = tip_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
-				} else  {
-					COLOR = wind_color.xyzw  + vec4(pnoise, pnoise, pnoise, 1.0) * PerlinNoise2D(uvWorldPosX * 100.0, uvWorldPosY * 100.0) * 0.1;
-				}
-
-				// Add the cloud shadow
-				// COLOR -= vec4(texture2D(cloud_tex, uv).rgb, 0.0);
-				break;
-			} else if (dist < blade_length) {
-				// Color grass stems
-				COLOR = sampleColor(dist);
-
-				// Add the cloud shadow
-				// COLOR -= vec4(texture2D(cloud_tex, uv).rgb, 0.0);
-			}
-		}
-
-		// Move on to the next pixel, down the blades
-		uv += vec2(0.0, SCREEN_PIXEL_SIZE.y);
-	}
+  float pnoise = fract(seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) * 1. + seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) / 2.0);
 
 
-  // gl_FragColor = vec4(pnoise, pnoise, pnoise, 1.0);
+  vec4 COLOR = vec4(0.0, 0.0, 0.0, 1.0);
+
+
+  if (texture2D(tex, uv).a == 0.0) {
+    discard;
+  }
+  // float pnoise = fract(seamless_noise(uvWorld / 12.0));
+
+  vec4 grass_color = texture2D(grass_tex, uvWorld * 1.0);
+  vec4 grass_color2 = texture2D(grass_tex2, uvWorld * 1.0);
+
+//   if (seamless_noise(step(0.1, uvWorld)) > 0.5) {
+    COLOR = grass_color;
+//   } else {
+    // COLOR = grass_color2;
+//   }
+
+  // Apply wind effect
+  vec2 swayed_uv = uvWorld + sway(uvWorld, time * 10.0);
+//   COLOR.rgb += wind_color.rgb;
+  COLOR.rgb += wind_color.rgb * abs(wind(swayed_uv * resolution, time * 100.0, pnoise)) * 0.2;
+
+
+
+  // // COLOR /= 10.0;
+
+  // COLOR.r *= 0.01;
+  // COLOR.b *= 0.01;
+
+  // // Apply wind effect
+//   COLOR.rgb += wind_color.rgb * abs(wind(uvWorld * resolution * 1.0, time * 10.0, pnoise)) * 0.2;
+
+//   COLOR.rgb = fract(COLOR.rgb);
+
+  // start with brown ground base color
+  vec4 ground_color = vec4(0.5, 0.3, 0.1, 1.0);
+  vec2 voro = voronoi(uvWorld * 8.0) + pnoise * 0.1;
+  COLOR = texture2D(grass_tex, voro.xy) * 0.3;
+  COLOR = mix(ground_color, COLOR, 0.35);
+  COLOR.a = 1.0;
+  // COLOR = mix(COLOR, tip_color, 0.4);
+
+
   gl_FragColor = COLOR;
 }`;
 
