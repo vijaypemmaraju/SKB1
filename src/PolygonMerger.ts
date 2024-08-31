@@ -1,6 +1,6 @@
-// import { Geom, union } from "martinez-polygon-clipping";
+import { Geom, union } from "martinez-polygon-clipping";
 import simplify from "simplify-js";
-import polygonClipping, { Geom } from "polygon-clipping";
+// import polygonClipping, { Geom } from "polygon-clipping";
 
 export default class PolygonMerger {
   polygons: Geom;
@@ -17,7 +17,7 @@ export default class PolygonMerger {
     // Use martinez-polygon-clipping to merge the polygons
     let merged: Geom = [this.polygons[0]] as Geom;
     for (let i = 1; i < this.polygons.length; i++) {
-      merged = polygonClipping.union([this.polygons[i]] as Geom, merged);
+      merged = union([this.polygons[i]] as Geom, merged);
     }
 
     return merged;

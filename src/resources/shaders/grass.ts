@@ -249,6 +249,7 @@ void main() {
   vec4 ground_color = vec4(0.5, 0.3, 0.1, 1.0);
   vec2 voro = voronoi(uvWorld * 8.0) + pnoise * 0.1;
   COLOR = texture2D(grass_tex, voro.xy) * 0.3;
+  // COLOR += texture2D(grass_tex, voro.xy * 4.0) * 0.8;
   COLOR = mix(ground_color, COLOR, 0.35);
   COLOR.a = 1.0;
   // COLOR = mix(COLOR, tip_color, 0.4);

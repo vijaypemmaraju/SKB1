@@ -18,7 +18,21 @@ graphElement.id = "graph";
 graphElement.style.display = "none";
 document.body.appendChild(graphElement);
 
-const data = graphGenerator();
+const data1 = graphGenerator("1_");
+const data2 = graphGenerator("2_");
+
+
+const data = {
+  nodes: [...data1.nodes, ...data2.nodes],
+  links: [...data1.links, ...data2.links],
+};
+
+data.links.push({
+  source: "1_ROOT",
+  target: "2_ROOT",
+  group: "LEADS_TO",
+});
+
 
 const graph = ForceGraph()(graphElement);
 
@@ -59,7 +73,7 @@ graph
   .linkCanvasObjectMode(() => "after");
 
 graph.d3Force("link")?.distance((link: LinkType) => {
-  return Phaser.Math.FloatBetween(75, 155);
+  return Phaser.Math.FloatBetween(25, 255);
 });
 
 graph.d3Force("charge")!.strength(() => {

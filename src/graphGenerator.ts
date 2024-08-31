@@ -78,11 +78,11 @@ const LOCKS = ["Funny Troll", "Silly Bridge", "Big Boulder"];
 
 const KEYS = ["Troll Key", "Bridge Key", "Boulder Key"];
 
-const graphGenerator = () => {
+const graphGenerator = (prefix: string) => {
   let nodes: NodeType[] = [];
   let links: LinkType[] = [];
   nodes.push({
-    id: "ROOT",
+    id: `${prefix}ROOT`,
     group: "ROOT",
   });
   // Add 5 random rooms, non-duplicate
@@ -99,13 +99,13 @@ const graphGenerator = () => {
   for (let i = 0; i < roomNames.length; i++) {
     const roomName = roomNames[i];
     nodes.push({
-      id: roomName,
+      id: `${prefix}${roomName}`,
       group: "ROOM",
     });
 
     links.push({
-      source: "ROOT",
-      target: roomName,
+      source: `${prefix}ROOT`,
+      target: `${prefix}${roomName}`,
       group: "LEADS_TO",
     });
 
@@ -114,13 +114,13 @@ const graphGenerator = () => {
       const puzzleName = PUZZLES[i];
       puzzles.push(puzzleName);
       nodes.push({
-        id: puzzleName,
+        id: `${prefix}${puzzleName}`,
         group: "PUZZLE",
       });
 
       links.push({
-        source: roomName,
-        target: puzzleName,
+        source: `${prefix}${roomName}`,
+        target: `${prefix}${puzzleName}`,
         group: "CONTAINS",
       });
     }
@@ -137,19 +137,19 @@ const graphGenerator = () => {
     for (const clue of puzzleClues) {
       const roomName = roomNames[Math.floor(Math.random() * roomNames.length)];
       nodes.push({
-        id: clue,
+        id: `${prefix}${clue}`,
         group: "CLUE",
       });
 
       links.push({
-        source: roomName,
-        target: clue,
+        source: `${prefix}${roomName}`,
+        target: `${prefix}${clue}`,
         group: "CONTAINS",
       });
 
       links.push({
-        source: clue,
-        target: puzzleName,
+        source: `${prefix}${clue}`,
+        target: `${prefix}${puzzleName}`,
         group: "SOLVES",
       });
     }
@@ -165,7 +165,7 @@ const graphGenerator = () => {
   // add locks, and connect to two random rooms each
   for (const lockName of LOCKS) {
     nodes.push({
-      id: lockName,
+      id: `${prefix}${lockName}`,
       group: "LOCK",
     });
     const room1 = rooms[index];
@@ -174,14 +174,14 @@ const graphGenerator = () => {
     index = (index + 1) % rooms.length;
 
     links.push({
-      source: room1,
-      target: lockName,
+      source: `${prefix}${room1}`,
+      target: `${prefix}${lockName}`,
       group: "LEADS_TO",
     });
 
     links.push({
-      source: lockName,
-      target: room2,
+      source: `${prefix}${lockName}`,
+      target: `${prefix}${room2}`,
       group: "UNLOCKS",
     });
   }

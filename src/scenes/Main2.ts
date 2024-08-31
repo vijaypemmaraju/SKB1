@@ -132,9 +132,13 @@ export default class Main2 extends Scene {
     // zoom on scroll
     this.input.on("wheel", (pointer, gameObjects, deltaX, deltaY, deltaZ) => {
       const zoom = this.cameras.main.zoom;
-      // this.cameras.main.zoom = Phaser.Math.Clamp(zoom - deltaY * 0.001, 0.1, 2);
-      // const newWidth = this.cameras.main.width / this.cameras.main.zoom;
-      // const newHeight = this.cameras.main.height / this.cameras.main.zoom;
+      this.cameras.main.zoom = Phaser.Math.Clamp(
+        zoom - deltaY * 0.001,
+        0.05,
+        2
+      );
+      const newWidth = this.cameras.main.width / this.cameras.main.zoom;
+      const newHeight = this.cameras.main.height / this.cameras.main.zoom;
       // console.log(newWidth, newHeight);
       // this.renderTexture.resize(newWidth, newHeight);
       // this.grassShader.setUniform("resolution.value.x", newWidth);
@@ -241,6 +245,7 @@ export default class Main2 extends Scene {
 
       this.cameras.main.centerOn(midpoint.x, midpoint.y);
       this.cameras.main.zoom = 0.05;
+      // this.cameras.main.zoom = 1;
       const points = movedData.nodes!.map((n) => [n.x, n.y]) as [
         number,
         number
@@ -323,7 +328,7 @@ export default class Main2 extends Scene {
       await new Promise((resolve) => setTimeout(resolve, 0));
       entities.forEach((e) => e.destroy());
 
-      // this.add.polygon(0, 0, merged, 0xff0000).setOrigin(0, 0).setDepth(1);
+      // this.add.polygon(0, 0, merged, 0xff0000).setOrigin(0, 0).setDepth(4);
       this.island = merged[0].flat();
       this.islandPolygon = new Phaser.GameObjects.Polygon(
         this,
@@ -335,6 +340,9 @@ export default class Main2 extends Scene {
         .setOrigin(0, 0)
         .setVisible(false);
       this.add.existing(this.islandPolygon);
+      this.cameras.main.setZoom(1);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
       // polygons.forEach((p) => {
       //   this.add.polygon(0, 0, p, 0x00ff00).setOrigin(0, 0);
       // });
@@ -348,8 +356,7 @@ export default class Main2 extends Scene {
       // player.visible = false;
 
       this.player = player;
-      this.cameras.main.startFollow(player, true, 0.05, 0.05);
-      this.cameras.main.setZoom(1);
+      // this.cameras.main.startFollow(player, true, 0.05, 0.05);
 
       const waterShader = addEntity(this.world);
       addComponent(this.world, GameObject, waterShader);
@@ -451,24 +458,32 @@ export default class Main2 extends Scene {
 
       this.grassParticles = this.add
         .particles(0, 0, "grass", {
-          scale: { min: 1, max: 1 },
+          scaleX: { min: 1, max: 1 },
+          scaleY: {
+            onUpdate: (particle, key, value) => {
+              // console.log(value);
+              if (Phaser.Math.Distance.BetweenPoints(particle, player) < 36) {
+                return Math.max(value - 0.01, 0.5);
+              } else {
+                return 1;
+              }
+            },
+          },
           speed: { min: 0, max: 0 },
           rotate: {
             onUpdate: (particle, key, value) => {
               return (
-                (Math.sin(
-                  (particle.x +
-                    particle.y +
+                Math.sin(
+                  (particle.x * particle.y +
                     particle.life -
                     particle.lifeCurrent) *
-                    0.001
-                ) -
-                  0.5) *
-                10
+                    0.005 -
+                    0.5
+                ) * 10
               );
             },
           },
-          lifespan: 6000000,
+          lifespan: Number.MAX_SAFE_INTEGER,
         })
         .setDepth(1)
         .setMask(mask);
@@ -477,30 +492,34 @@ export default class Main2 extends Scene {
       const polygon = new Phaser.Geom.Polygon(this.island);
 
       let createdPoints = [] as { x: number; y: number }[];
-      // while (createdPoints.length < 10000) {
-      //   const position = {
-      //     x: Phaser.Math.Between(bounds.x, bounds.x + bounds.width),
-      //     y: Phaser.Math.Between(bounds.y, bounds.y + bounds.height),
-      //   };
-      //   if (
-      //     Phaser.Geom.Polygon.Contains(
-      //       new Phaser.Geom.Polygon(this.island),
-      //       position.x,
-      //       position.y
-      //     ) &&
-      //     movedData.nodes?.some(
-      //       (n) =>
-      //         Phaser.Math.Distance.BetweenPoints(
-      //           new Phaser.Math.Vector2(position.x, position.y),
-      //           new Phaser.Math.Vector2(n.x!, n.y!)
-      //         ) < 800
-      //     )
-      //   ) {
-      //     // this.grassParticles.explode(1, position.x, position.y);
-      //     createdPoints.push(position);
-      //   }
-      // }
-    }, 0);
+      while (createdPoints.length < 40000) {
+        const randomNode = Phaser.Math.RND.pick(movedData.nodes!);
+        const circle = new Phaser.Geom.Circle(
+          randomNode.x,
+          randomNode.y,
+          GROUP_NODE_SIZES[(randomNode as NodeType).group] / scaleMultiplier
+        );
+
+        const position = Phaser.Geom.Circle.Random(circle);
+        if (
+          Phaser.Geom.Polygon.Contains(
+            new Phaser.Geom.Polygon(this.island),
+            position.x,
+            position.y
+          ) &&
+          movedData.nodes?.some(
+            (n) =>
+              Phaser.Math.Distance.BetweenPoints(
+                new Phaser.Math.Vector2(position.x, position.y),
+                new Phaser.Math.Vector2(n.x!, n.y!)
+              ) < 400
+          )
+        ) {
+          this.grassParticles.explode(1, position.x, position.y);
+          createdPoints.push(position);
+        }
+      }
+    }, 1000);
   }
 
   update(time: number, delta: number) {
@@ -511,13 +530,7 @@ export default class Main2 extends Scene {
         this.islandPolygon,
         this.cameras.main
       );
-      const cameraPosition = {
-        x: this.cameras.main.scrollX,
-        y: this.cameras.main.scrollY,
-      };
-      this.grassShader.setUniform("camera_position.value.x", cameraPosition.x);
-      this.grassShader.setUniform("camera_position.value.y", cameraPosition.y);
-      this.grassShader.setUniform("time.value", time);
+
       this.renderTexture.clear();
       this.renderTexture.draw(
         this.islandPolygon,
@@ -555,7 +568,7 @@ export default class Main2 extends Scene {
 
       const player = this.player;
       if (player) {
-        const speed = 1;
+        const speed = 0.5;
         const velocity = {
           x: 0,
           y: 0,
@@ -638,6 +651,29 @@ export default class Main2 extends Scene {
 
         player.x += velocity.x;
         player.y += velocity.y;
+
+        this.cameras.main.scrollX +=
+          (player.x - this.cameras.main.width / 2 - this.cameras.main.scrollX) *
+          0.05;
+        this.cameras.main.scrollY +=
+          (player.y -
+            this.cameras.main.height / 2 -
+            this.cameras.main.scrollY) *
+          0.05;
+
+        const cameraPosition = {
+          x: this.cameras.main.scrollX,
+          y: this.cameras.main.scrollY,
+        };
+        this.grassShader?.setUniform(
+          "camera_position.value.x",
+          cameraPosition.x
+        );
+        this.grassShader?.setUniform(
+          "camera_position.value.y",
+          cameraPosition.y
+        );
+        this.grassShader?.setUniform("time.value", time);
       }
     } catch (e) {
       console.error(e);
