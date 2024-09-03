@@ -18,28 +18,28 @@ graphElement.id = "graph";
 graphElement.style.display = "none";
 document.body.appendChild(graphElement);
 
-const data1 = graphGenerator("1_");
-const data2 = graphGenerator("2_");
+const data = graphGenerator('');
+// const data2 = graphGenerator("2_");
 
 
-const data = {
-  nodes: [...data1.nodes, ...data2.nodes],
-  links: [...data1.links, ...data2.links],
-};
+// const data = {
+//   nodes: [...data1.nodes, ...data2.nodes],
+//   links: [...data1.links, ...data2.links],
+// };
 
-data.links.push({
-  source: "1_ROOT",
-  target: "2_ROOT",
-  group: "LEADS_TO",
-});
+// data.links.push({
+//   source: "1_ROOT",
+//   target: "2_ROOT",
+//   group: "LEADS_TO",
+// });
 
 
 const graph = ForceGraph()(graphElement);
 
 graph
   .graphData(data)
-  .warmupTicks(5000)
-  .cooldownTime(1000)
+  // .warmupTicks(5000)
+  // .cooldownTime(1000)
   // .d3AlphaDecay(0.0228)
   // .d3VelocityDecay(0.01)
   // .d3Force("charge")

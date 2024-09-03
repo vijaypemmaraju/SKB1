@@ -1,5 +1,6 @@
 import { AUTO, Game, WEBGL } from "phaser";
 import Main2 from "./scenes/Main2";
+import Main3 from "./scenes/Main3";
 
 const width = Math.min(512, window.innerWidth);
 const game = new Game({
@@ -8,16 +9,14 @@ const game = new Game({
   // height: window.innerHeight / 2,
   antialias: false,
   type: AUTO,
-  scene: Main2,
+  scene: Main3,
   pixelArt: true,
   scale: {
     mode: Phaser.Scale.FIT,
   },
   physics: {
     default: "arcade",
-    arcade: {
-      debug: true,
-    },
+    arcade: { debug: false },
   },
   fps: {
     min: 5,

@@ -174,12 +174,8 @@ export default class Main2 extends Scene {
     setTimeout(async () => {
       const graph = useStore.getState().forceGraphInstance;
       const data = graph?.graphData();
-      const lowestX = Math.min(
-        ...(data?.nodes.map((n) => (n as NodeType).x!) || [])
-      );
-      const lowestY = Math.min(
-        ...(data?.nodes.map((n) => (n as NodeType).y!) || [])
-      );
+      const lowestX = 0;
+      const lowestY = 0;
       const scaleMultiplier = 0.125;
 
       const centerOfScreen = {
@@ -537,34 +533,6 @@ export default class Main2 extends Scene {
         canvasPosition.x,
         canvasPosition.y
       );
-
-      if (time < 10000) {
-        // this.dynamicGrass?.fill(0x000000);
-        // for (let i = 0; i < this.grassBladePositions.length; i++) {
-        //   this.dynamicGrass?.stamp(
-        //     "grass",
-        //     0,
-        //     this.grassBladePositions[i].x,
-        //     this.grassBladePositions[i].y,
-        //     {
-        //       angle: this.grassBladePositions[i].rotation,
-        //     }
-        //   );
-        // }
-
-        this.dynamicGrass2?.fill(0x000000);
-        this.dynamicGrass?.beginDraw();
-        for (let i = 0; i < this.grassBladePositions2.length; i++) {
-          // this.dynamicGrass2?.stamp(
-          //   "grass",
-          //   0,
-          //   this.grassBladePositions2[i].x,
-          //   this.grassBladePositions2[i].y,
-          //   { angle: this.grassBladePositions2[i].rotation }
-          // );
-        }
-        this.dynamicGrass?.endDraw();
-      }
 
       const player = this.player;
       if (player) {
