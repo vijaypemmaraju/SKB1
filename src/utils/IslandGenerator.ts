@@ -100,44 +100,20 @@ export default class IslandGenerator {
         new Phaser.Math.Vector2(endX, endY)
       );
 
-      const distancePoints = bezier.getDistancePoints(300);
+      const distancePoints = bezier.getDistancePoints(
+        50 / this.scaleMultiplier
+      );
       const points = [];
       for (let j = 0; j < distancePoints.length; j++) {
         points.push([distancePoints[j].x, distancePoints[j].y]);
       }
 
-      const offsetPoints = new Offset().data(points).offsetLine(320).flat();
+      const offsetPoints = new Offset()
+        .data(points)
+        .offsetLine(50 / this.scaleMultiplier)
+        .flat();
+      (link as any).offsetPoints = offsetPoints;
       polygons.push(offsetPoints);
-    }
-
-    // let merged = new PolygonMerger(polygons as Geom).mergePolygons();
-    // merged = new PolygonMerger(merged[0] as Geom).mergePolygons();
-
-    // use bfs to merge polygons
-    const root = this.data.nodes.find((node) => node.id === "ROOT");
-    const queue = [root];
-    const visited = new Set();
-    visited.add(root);
-
-    while (queue.length > 0) {
-      const node = queue.shift();
-      const links = this.data.links.filter((link) => link.source === node);
-      const neighbors = links.map((link) => link.target);
-
-      for (let i = 0; i < neighbors.length; i++) {
-        const neighbor = neighbors[i];
-        if (!visited.has(neighbor)) {
-          visited.add(neighbor);
-          queue.push(neighbor);
-
-          const polygon = polygons.find((polygon) =>
-            polygon.includes(neighbor)
-          );
-          if (polygon) {
-            polygons.push(polygon);
-          }
-        }
-      }
     }
 
     let merged = new PolygonMerger(polygons as Geom).mergePolygons();

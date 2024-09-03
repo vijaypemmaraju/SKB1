@@ -39,7 +39,7 @@ const graph = ForceGraph()(graphElement);
 graph
   .graphData(data)
   // .warmupTicks(5000)
-  // .cooldownTime(1000)
+  // .cooldownTime(9000)
   // .d3AlphaDecay(0.0228)
   // .d3VelocityDecay(0.01)
   // .d3Force("charge")
@@ -73,7 +73,7 @@ graph
   .linkCanvasObjectMode(() => "after");
 
 graph.d3Force("link")?.distance((link: LinkType) => {
-  return Phaser.Math.FloatBetween(25, 255);
+  return Phaser.Math.FloatBetween(75, 155);
 });
 
 graph.d3Force("charge")!.strength(() => {

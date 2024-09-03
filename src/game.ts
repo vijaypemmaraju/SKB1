@@ -4,8 +4,8 @@ import Main3 from "./scenes/Main3";
 
 const width = Math.min(512, window.innerWidth);
 const game = new Game({
-  width: window.innerWidth,
-  height: window.innerHeight,
+  width: 1280,
+  height: 720,
   // height: window.innerHeight / 2,
   antialias: false,
   type: AUTO,

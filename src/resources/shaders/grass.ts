@@ -188,7 +188,8 @@ vec2 voronoi(vec2 uv) {
 }
 
 void main() {
-  vec2 UV = fragCoord / resolution;
+  vec2 UV = (fragCoord) / (resolution);
+  // UV /= camera_zoom;
   UV.y = 1.0 - UV.y;
 
   vec2 SCREEN_PIXEL_SIZE = vec2(1.0 / resolution.x, 1.0 / resolution.y);
@@ -199,63 +200,81 @@ void main() {
 
   float uvWorldPosX = (uv.x);
   float uvWorldPosY = (uv.y);
-  float cameraX = camera_position.x / resolution.x;
-  float cameraY = camera_position.y / resolution.y;
-  uvWorldPosX += cameraX;
-  uvWorldPosY += cameraY;
-  uvWorldPosX = fract(uvWorldPosX);
-  uvWorldPosY = fract(uvWorldPosY);
+
+  // Adjust camera position based on zoom
+  float cameraX = (camera_position.x / camera_zoom) / resolution.x;
+  float cameraY = (camera_position.y / camera_zoom) / resolution.y;
 
   vec2 uvWorld = vec2(uvWorldPosX, uvWorldPosY);
 
-  float pnoise = fract(seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) * 1. + seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) / 2.0);
+
+  // uv *= camera_zoom;
+
+  // uv = fract(uv);
+
+  // // uvWorldPosX += cameraX / camera_zoom;
+  // // uvWorldPosY += cameraY / camera_zoom;
+  // uvWorldPosX = fract(uvWorldPosX);
+  // uvWorldPosY = fract(uvWorldPosY);
 
 
-  vec4 COLOR = vec4(0.0, 0.0, 0.0, 1.0);
 
 
-  if (texture2D(tex, uv).a == 0.0) {
+
+  // float pnoise = fract(seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) * 1. + seamless_noise(vec2(uvWorldPosX * 1.0, uvWorldPosY * 1.0)) / 2.0);
+
+
+  // vec4 COLOR = vec4(0.0, 0.0, 0.0, 1.0);
+
+
+  if (texture2D(tex, uvWorld).r == 0.0) {
     discard;
   }
+
+  // if (texture2D(tex, uvWorld).a == 0.0) {
+  //   discard;
+  // }
   // float pnoise = fract(seamless_noise(uvWorld / 12.0));
 
-  vec4 grass_color = texture2D(grass_tex, uvWorld * 1.0);
-  vec4 grass_color2 = texture2D(grass_tex2, uvWorld * 1.0);
+//   vec4 grass_color = texture2D(grass_tex, uvWorld * 1.0);
+//   vec4 grass_color2 = texture2D(grass_tex2, uvWorld * 1.0);
 
-//   if (seamless_noise(step(0.1, uvWorld)) > 0.5) {
-    COLOR = grass_color;
-//   } else {
-    // COLOR = grass_color2;
-//   }
+// //   if (seamless_noise(step(0.1, uvWorld)) > 0.5) {
+//     COLOR = grass_color;
+// //   } else {
+//     // COLOR = grass_color2;
+// //   }
 
-  // Apply wind effect
-  vec2 swayed_uv = uvWorld + sway(uvWorld, time * 10.0);
-//   COLOR.rgb += wind_color.rgb;
-  COLOR.rgb += wind_color.rgb * abs(wind(swayed_uv * resolution, time * 100.0, pnoise)) * 0.2;
+//   // Apply wind effect
+//   vec2 swayed_uv = uvWorld + sway(uvWorld, time * 10.0);
+// //   COLOR.rgb += wind_color.rgb;
+//   COLOR.rgb += wind_color.rgb * abs(wind(swayed_uv * resolution, time * 100.0, pnoise)) * 0.2;
 
 
 
-  // // COLOR /= 10.0;
+//   // // COLOR /= 10.0;
 
-  // COLOR.r *= 0.01;
-  // COLOR.b *= 0.01;
+//   // COLOR.r *= 0.01;
+//   // COLOR.b *= 0.01;
 
-  // // Apply wind effect
-//   COLOR.rgb += wind_color.rgb * abs(wind(uvWorld * resolution * 1.0, time * 10.0, pnoise)) * 0.2;
+//   // // Apply wind effect
+// //   COLOR.rgb += wind_color.rgb * abs(wind(uvWorld * resolution * 1.0, time * 10.0, pnoise)) * 0.2;
 
-//   COLOR.rgb = fract(COLOR.rgb);
+// //   COLOR.rgb = fract(COLOR.rgb);
 
-  // start with brown ground base color
-  vec4 ground_color = vec4(0.5, 0.3, 0.1, 1.0);
-  vec2 voro = voronoi(uvWorld * 8.0) + pnoise * 0.1;
-  COLOR = texture2D(grass_tex, voro.xy) * 0.3;
-  // COLOR += texture2D(grass_tex, voro.xy * 4.0) * 0.8;
-  COLOR = mix(ground_color, COLOR, 0.35);
-  COLOR.a = 1.0;
+//   // start with brown ground base color
+//   vec4 ground_color = vec4(0.5, 0.3, 0.1, 1.0);
+//   vec2 voro = voronoi(uvWorld * 8.0) + pnoise * 0.1;
+//   COLOR = texture2D(grass_tex, voro.xy) * 0.3;
+//   // COLOR += texture2D(grass_tex, voro.xy * 4.0) * 0.8;
+//   COLOR = mix(ground_color, COLOR, 0.35);
+//   COLOR.a = 1.0;
   // COLOR = mix(COLOR, tip_color, 0.4);
 
 
-  gl_FragColor = COLOR;
+  // gl_FragColor = COLOR;
+
+  gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
 }`;
 
 export default grass;
